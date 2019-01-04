@@ -45,7 +45,11 @@ $(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
 .PHONY += build-image run-image clean-image
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
 .PHONY += image devel run dump restartgdb rungdb stopgdb all
-.PHONY += defconfig-in-docker distclean-in-docker image-in-docker gdb-in-docker dump-in-docker
+.PHONY += image-in-docker rootfs-in-docker 
+.PHONY += defconfig-in-docker menuconfig-in-docker
+.PHONY += fs-defconfig-in-docker fs-menuconfig-in-docker
+.PHONY += clean-in-docker distclean-in-Docker
+.PHONY += gdb-in-docker dump-in-docker
 
 defconfig-after-in-docker-x86_64 :
 	cd src/${KERNEL} && \
@@ -78,6 +82,9 @@ menuconfig-in-docker :
 distclean-in-docker :
 	cd src/${KERNEL} && make distclean
 
+clean-in-docker :
+	cd src/${KERNEL} && make clean
+
 image-in-docker :
 	cd src/${KERNEL} && make ${IMAGE} -j$(THREADS)
 
@@ -90,6 +97,9 @@ fs-defconfig-in-docker :
 
 fs-menuconfig-in-docker :
 	cd src/${BUSYBOX} && make menuconfig
+
+fs-clean-in-docker :
+	cd src/${BUSYBOX} && make clean
 
 rootfs-in-docker :
 	cd src/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs.sh
@@ -178,6 +188,22 @@ fs-distclean :
 	--name buildlinux \
 	-it linux-lib-${RARCH}:latest \
 	make RARCH=${RARCH} fs-distclean-in-docker; \
+	sudo docker rm buildlinux
+
+clean :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} clean-in-docker ; \
+	sudo docker rm buildlinux
+
+fs-clean :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} fs-clean-in-docker ; \
 	sudo docker rm buildlinux
 
 image :

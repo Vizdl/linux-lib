@@ -13,5 +13,11 @@
         建议阅读书籍 : Linux内核设计与实现
     3) linux 的使用
         略
+
 ## 如何构建 linux-lib docker 镜像?
-请观看[DOCKEROPR](./DOCKEROPR)
+    sudo make build-Docker-Image
+
+## 如何运行镜像
+    sudo make run-Docker-Imag
+## 推荐书籍
+推荐书籍清单PDF请点击[链接](https://gitee.com/Vizdl/os-books.git)。支持正版,PDF仅供学习使用,有能力的朋友买实体书多多支持一下。

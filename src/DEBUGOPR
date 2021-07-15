@@ -1,0 +1,12 @@
+# 开启调试
+qemu -kernel ./arch/x86_64/boot/bzImage -s -S -append "console=ttyS0" -nographic
+# 开启另一个终端,打开 gdb
+gdb
+# 告诉 gdb vmlinux 的路径,加载符号表
+file /opr/vmlinux
+# 远程连接监听在TCP 1234的 gdb server
+target remote:1234
+# 打断点
+break start_kernel
+# continue,继续执行代码
+c

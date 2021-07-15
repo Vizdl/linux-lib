@@ -1,0 +1,13 @@
+# 生成默认配置
+make x86_64_defconfig
+make defconfig
+# 通过窗口进行配置
+make menuconfig
+# 多线程编译
+make bzImage -j64
+# 清理大多数编译生成的文件，但会保留config文件等
+make clean
+# 清理所有编译生成的文件、config及某些备份文件
+make mrproper
+# 清理mrproper、patches以及编辑器备份文件
+make distclean

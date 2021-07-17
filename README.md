@@ -13,6 +13,11 @@
         建议阅读书籍 : Linux内核设计与实现
     3) linux 的使用
         略
+        
+## 容器快速安装
+```
+curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+```
 
 ## 如何构建 linux-lib docker 镜像?
     sudo make build-Docker-Image

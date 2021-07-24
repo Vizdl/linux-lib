@@ -12,7 +12,7 @@ dos2unix lkc2sicx.py  gen_sourceinsight_list.sh
 
 # 配置宏配置文件
 make defconfig
-./lkc2sicx.py -s .config -d ../read-config/example
+./lkc2sicx.py -s .config -d ../read-config/default
 
 # 生成脚本
 make -j32 > build.log

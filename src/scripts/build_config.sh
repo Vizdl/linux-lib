@@ -3,8 +3,8 @@
 if [ ! -d "read-config" ];then
     mkdir read-config
 fi
-# in linux-2.6.34
-cd linux-2.6.34
+# in linux
+cd linux
 
 cp ../scripts/lkc2sicx.py .
 cp ../scripts/gen_sourceinsight_list.sh .

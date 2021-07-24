@@ -1,4 +1,4 @@
-# <center>搭建个人Linux环境</center>
+# <center>搭建个人开发Linux环境</center>
 -------
 ## <center>简述</center>
 #### Linux内核代码阅读的困难 :

@@ -1,11 +1,15 @@
 FROM ubuntu:18.04
 MAINTAINER author "vizdl@qq.com"
-# COPY sources.list /etc/apt/ # 更换源操作,目前无其他合适的国内源,更换后会导致失败。
+# 添加代理服务器解除ENV注释,填入IP:PORT即可。
+# ENV http_proxy "http://192.168.31.26:10809"
+# ENV https_proxy "https://192.168.31.26:10809"
+# 更换源删除下一行注释,且更改 sources.list 文件
+# ADD sources.list /etc/apt
 # COPY linux-2.6.34 /opt/linux-2.6.34/
 ENV DEBIAN_FRONTEND=noninteractive
 RUN	apt-get update \
-	&& apt-get install gcc-4.8 gdb qemu make dos2unix -y \
+	&& apt-get install gcc gdb qemu make dos2unix -y \
 	&& apt-get install build-essential kernel-package libncurses5-dev -y \
+	&& apt-get install flex bison libelf-dev libssl-dev -y \
 	# 晚一些改,避免前面需要安装时会覆盖。
-	&& ln -sf /usr/bin/gcc-4.8 /usr/bin/gcc \
 	&& ln -sf /usr/bin/qemu-system-x86_64 /usr/bin/qemu

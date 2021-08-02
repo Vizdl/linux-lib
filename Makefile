@@ -1,7 +1,14 @@
-.PHONY : build-Docker-Image run-Docker-Image clean-Docker-Image
+.PHONY : build-Docker-Image-Base build-Docker-Image-High build-Docker-Image-Low \
+		run-Docker-Image clean-Docker-Image
 
-build-Docker-Image :
-	sudo docker build -t linux-lib:latest Docker
+build-Docker-Image-Base :
+	sudo docker build -t linux-lib-base:latest -f ./Docker/Dockerfile-Base ./Docker/source
+
+build-Docker-Image-High :
+	sudo docker build -t linux-lib-high:latest -f ./Docker/Dockerfile-High ./Docker/source
+
+build-Docker-Image-Low :
+	sudo docker build -t linux-lib-low:latest -f ./Docker/Dockerfile-Low ./Docker/source
 
 run-Docker-Image :
 	docker run \

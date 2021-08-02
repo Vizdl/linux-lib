@@ -1,0 +1,11 @@
+FROM linux-lib-base:latest
+MAINTAINER author "vizdl@qq.com"
+# 添加代理服务器解除ENV注释,填入IP:PORT即可。
+# ENV http_proxy "http://192.168.31.26:10809"
+# ENV https_proxy "https://192.168.31.26:10809"
+# 更换源删除下一行注释,且更改 sources.list 文件
+# ADD sources.list /etc/apt
+# COPY linux-2.6.34 /opt/linux-2.6.34/
+ENV DEBIAN_FRONTEND=noninteractive
+RUN	apt-get update \
+	&& apt-get install gcc -y

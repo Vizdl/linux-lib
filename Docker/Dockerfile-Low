@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM linux-lib-base:latest
 MAINTAINER author "vizdl@qq.com"
 # 添加代理服务器解除ENV注释,填入IP:PORT即可。
 # ENV http_proxy "http://192.168.31.26:10809"
@@ -8,8 +8,5 @@ MAINTAINER author "vizdl@qq.com"
 # COPY linux-2.6.34 /opt/linux-2.6.34/
 ENV DEBIAN_FRONTEND=noninteractive
 RUN	apt-get update \
-	&& apt-get install gcc gdb qemu make dos2unix -y \
-	&& apt-get install build-essential kernel-package libncurses5-dev -y \
-	&& apt-get install flex bison libelf-dev libssl-dev -y \
-	# 晚一些改,避免前面需要安装时会覆盖。
-	&& ln -sf /usr/bin/qemu-system-x86_64 /usr/bin/qemu
+	&& apt-get install gcc-4.8 -y \
+	&& ln -sf /usr/bin/gcc-4.8 /usr/bin/gcc

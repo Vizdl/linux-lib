@@ -5,7 +5,6 @@ build-Docker-Image :
 
 run-Docker-Image :
 	docker run \
-	-w /workdir \
 	--volume=${PWD}/src:/workdir:rw \
 	-it linux-lib:latest \
 	/bin/bash

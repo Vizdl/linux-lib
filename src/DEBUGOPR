@@ -1,5 +1,5 @@
 # 开启调试
-qemu -kernel ./arch/x86_64/boot/bzImage -s -S -append "console=ttyS0" -nographic
+qemu-system-x86_64 -kernel ./arch/x86_64/boot/bzImage -s -S -append "console=ttyS0" -nographic
 # 开启另一个终端,打开 gdb
 gdb
 # 告诉 gdb vmlinux 的路径,加载符号表

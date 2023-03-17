@@ -525,6 +525,7 @@ static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun)
 		return 1;
 
 	span = sched_rt_period_mask();
+	/* 遍历每个核 */
 	for_each_cpu(i, span) {
 		int enqueue = 0;
 		struct rt_rq *rt_rq = sched_rt_period_rt_rq(rt_b, i);
@@ -537,8 +538,17 @@ static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun)
 			raw_spin_lock(&rt_rq->rt_runtime_lock);
 			if (rt_rq->rt_throttled)
 				balance_runtime(rt_rq);
+			/**
+			 * 获取周期运行时间
+			 */
 			runtime = rt_rq->rt_runtime;
+			/**
+			 * 
+			 */
 			rt_rq->rt_time -= min(rt_rq->rt_time, overrun*runtime);
+			/**
+			 * 运行时间大于可运行时间
+			 */
 			if (rt_rq->rt_throttled && rt_rq->rt_time < runtime) {
 				rt_rq->rt_throttled = 0;
 				enqueue = 1;
@@ -548,7 +558,9 @@ static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun)
 			raw_spin_unlock(&rt_rq->rt_runtime_lock);
 		} else if (rt_rq->rt_nr_running)
 			idle = 0;
-
+		/**
+		 * 排队
+		 */
 		if (enqueue)
 			sched_rt_rq_enqueue(rt_rq);
 		raw_spin_unlock(&rq->lock);
@@ -1064,7 +1076,9 @@ static struct task_struct *_pick_next_task_rt(struct rq *rq)
 
 	if (unlikely(!rt_rq->rt_nr_running))
 		return NULL;
-
+	/**
+	 * 如若窒息,不可获取任务
+	 */
 	if (rt_rq_throttled(rt_rq))
 		return NULL;
 

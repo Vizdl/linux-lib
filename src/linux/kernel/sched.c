@@ -143,8 +143,8 @@ struct rt_prio_array {
 struct rt_bandwidth {
 	/* nests inside the rq lock: */
 	raw_spinlock_t		rt_runtime_lock;
-	ktime_t			rt_period;
-	u64			rt_runtime;
+	ktime_t				rt_period;
+	u64					rt_runtime;
 	struct hrtimer		rt_period_timer;
 };
 
@@ -152,6 +152,12 @@ static struct rt_bandwidth def_rt_bandwidth;
 
 static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun);
 
+/**
+ * @brief rt 周期高精度定时器回调
+ * 
+ * @param timer 当前定时器
+ * @return 是否需要重启定时器
+ */
 static enum hrtimer_restart sched_rt_period_timer(struct hrtimer *timer)
 {
 	struct rt_bandwidth *rt_b =
@@ -161,12 +167,13 @@ static enum hrtimer_restart sched_rt_period_timer(struct hrtimer *timer)
 	int idle = 0;
 
 	for (;;) {
+		/* 获取定时器时间 */
 		now = hrtimer_cb_get_time(timer);
 		overrun = hrtimer_forward(timer, now, rt_b->rt_period);
 
 		if (!overrun)
 			break;
-
+		/* 执行 */
 		idle = do_sched_rt_period_timer(rt_b, overrun);
 	}
 
@@ -436,7 +443,13 @@ struct rt_rq {
 	struct plist_head pushable_tasks;
 #endif
 	int rt_throttled;
+	/**
+	 * 当前 rt_rq 运行的时间
+	 */
 	u64 rt_time;
+	/**
+	 * 当前 rt_rq 可运行的时间
+	 */
 	u64 rt_runtime;
 	/* Nests inside the rq lock: */
 	raw_spinlock_t rt_runtime_lock;

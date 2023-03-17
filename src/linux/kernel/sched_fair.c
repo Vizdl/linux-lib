@@ -301,6 +301,9 @@ static inline s64 entity_key(struct cfs_rq *cfs_rq, struct sched_entity *se)
 	return se->vruntime - cfs_rq->min_vruntime;
 }
 
+/**
+ * 用当前运行的任务 当前就绪的最高优先级 当前最小虚拟时间 比较出 min_vruntime
+ */
 static void update_min_vruntime(struct cfs_rq *cfs_rq)
 {
 	u64 vruntime = cfs_rq->min_vruntime;
@@ -330,18 +333,22 @@ static void __enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
 	struct rb_node **link = &cfs_rq->tasks_timeline.rb_node;
 	struct rb_node *parent = NULL;
 	struct sched_entity *entry;
+	/**
+	 * 计算虚拟运行时间与最小运行时间的差值
+	 */
 	s64 key = entity_key(cfs_rq, se);
 	int leftmost = 1;
 
 	/*
-	 * Find the right place in the rbtree:
+	 * 找到合适的地方插入
+	 * parent 最终指向待插入父节点
+	 * link 则是父节点的左/右子树指针的指针
 	 */
 	while (*link) {
 		parent = *link;
 		entry = rb_entry(parent, struct sched_entity, run_node);
 		/*
-		 * We dont care about collisions. Nodes with
-		 * the same key stay together.
+		 * 根据差值进行比较,优先级分别为 左子树 > 根 > 右子树
 		 */
 		if (key < entity_key(cfs_rq, entry)) {
 			link = &parent->rb_left;
@@ -352,8 +359,7 @@ static void __enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
 	}
 
 	/*
-	 * Maintain a cache of leftmost tree entries (it is frequently
-	 * used):
+	 * 这是一个优化点,为了更快找到最左的子树
 	 */
 	if (leftmost)
 		cfs_rq->rb_leftmost = &se->run_node;
@@ -364,6 +370,9 @@ static void __enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
 
 static void __dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
 {
+	/**
+	 * 如若是最左节点
+	 */
 	if (cfs_rq->rb_leftmost == &se->run_node) {
 		struct rb_node *next_node;
 
@@ -850,7 +859,7 @@ dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int sleep)
 }
 
 /*
- * Preempt the current task with a newly woken task if needed:
+ * 如果需要，通过一个新唤醒的任务抢占当前任务：
  */
 static void
 check_preempt_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr)
@@ -1064,7 +1073,9 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int wakeup, bool head)
 		flags |= ENQUEUE_WAKEUP;
 	if (p->state == TASK_WAKING)
 		flags |= ENQUEUE_MIGRATE;
-
+	/**
+	 * 找到根调度类
+	 */
 	for_each_sched_entity(se) {
 		if (se->on_rq)
 			break;

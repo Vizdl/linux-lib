@@ -974,6 +974,7 @@ static inline ssize_t do_tty_write(
 	}
 
 	/* Do the write .. */
+	/* 遍历所有数据 */
 	for (;;) {
 		size_t size = count;
 		if (size > chunk)

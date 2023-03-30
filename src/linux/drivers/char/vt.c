@@ -2509,6 +2509,9 @@ static void vt_console_print(struct console *co, const char *b, unsigned count)
 
 	/* Contrived structure to try to emulate original need_wrap behaviour
 	 * Problems caused when we have need_wrap set on '\n' character */
+	/* 这是一个人为构造的结构，旨在模拟原始的need_wrap行为。
+	当我们在'\n'字符上设置need_wrap时可能会引起问题。 */
+	/* 遍历所有数据 */
 	while (count--) {
 		c = *b++;
 		if (c == 10 || c == 13 || c == 8 || vc->vc_need_wrap) {
@@ -2534,6 +2537,7 @@ static void vt_console_print(struct console *co, const char *b, unsigned count)
 			if (c == 10 || c == 13)
 				continue;
 		}
+		// 将数据写在屏幕上
 		scr_writew((vc->vc_attr << 8) + c, (unsigned short *)vc->vc_pos);
 		notify_write(vc, c);
 		cnt++;

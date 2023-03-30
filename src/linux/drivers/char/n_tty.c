@@ -1918,7 +1918,13 @@ do_it_again:
  *		 (note that the process_output*() functions take this
  *		  lock themselves)
  */
-
+/*
+这段注释描述的是终端设备驱动程序的写函数。这个函数负责将写调用序列化到终端设备，确保多个写调用不会冲突。
+但该函数并不序列化 termios 更改、读取和其他类似事件。由于接收代码将回显字符，因此调用驱动程序的写方法，
+因此在此处调用的输出处理函数以及回显处理函数中都使用了 output_lock 以保护缓冲区中剩余的列状态和空间。
+此代码必须确保永远不会因挂起而睡眠。
+锁定：output_lock 用于保护列状态和剩余空间（注意，process_output *() 函数本身会获取此锁）。
+*/
 static ssize_t n_tty_write(struct tty_struct *tty, struct file *file,
 			   const unsigned char *buf, size_t nr)
 {
@@ -1948,6 +1954,7 @@ static ssize_t n_tty_write(struct tty_struct *tty, struct file *file,
 			retval = -EIO;
 			break;
 		}
+		/* 真正地输出 */
 		if (O_OPOST(tty) && !(test_bit(TTY_HW_COOK_OUT, &tty->flags))) {
 			while (nr > 0) {
 				ssize_t num = process_output_block(tty, b, nr);

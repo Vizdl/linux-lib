@@ -1,7 +1,7 @@
 .PHONY : build-Docker-Image run-Docker-Image clean-Docker-Image
 
 build-Docker-Image :
-	sudo docker build -t linux-lib:latest Docker
+	sudo docker build -t linux-lib:latest Docker --build-arg BUILDKIT_INLINE_CACHE=1 
 
 run-Docker-Image :
 	docker run \

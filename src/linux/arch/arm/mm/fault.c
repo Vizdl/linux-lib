@@ -240,6 +240,7 @@ good_area:
 	/*
 	 * If for any reason at all we couldn't handle the fault, make
 	 * sure we exit gracefully rather than endlessly redo the fault.
+	 * 如果由于任何原因我们无法处理错误，请确保我们优雅地退出，而不是无休止地重做错误。
 	 */
 	fault = handle_mm_fault(mm, vma, addr & PAGE_MASK, (fsr & FSR_WRITE) ? FAULT_FLAG_WRITE : 0);
 	if (unlikely(fault & VM_FAULT_ERROR))

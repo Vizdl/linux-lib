@@ -236,21 +236,21 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	int err;
 
 	prepare_to_copy(orig);
-
+	/* 1. 申请 pcb 内存 */
 	tsk = alloc_task_struct();
 	if (!tsk)
 		return NULL;
-
+	/* 2. 申请 thread info 内存 */
 	ti = alloc_thread_info(tsk);
 	if (!ti) {
 		free_task_struct(tsk);
 		return NULL;
 	}
-
+	/* 3. 完全拷贝 pcb */
  	err = arch_dup_task_struct(tsk, orig);
 	if (err)
 		goto out;
-
+	/* 4. 设置 stack */
 	tsk->stack = ti;
 
 	err = prop_local_init_single(&tsk->dirties);
@@ -1051,7 +1051,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	rcu_copy_process(p);
 	p->vfork_done = NULL;
 	spin_lock_init(&p->alloc_lock);
-
+	/* 初始化信号 */
 	init_sigpending(&p->pending);
 
 	p->utime = cputime_zero;

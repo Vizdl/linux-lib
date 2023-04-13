@@ -2075,6 +2075,10 @@ static inline void cow_user_page(struct page *dst, struct page *src, unsigned lo
  * to a shared page. It is done by copying the page to a new address
  * and decrementing the shared-page counter for the old page.
  *
+ * 当用户试图写入到共享页面时，此例程处理当前页面
+ * 。这是通过将页面复制到一个新地址来完成的
+ * 并将旧页的共享页计数器减1。
+ * 
  * Note that this routine assumes that the protection checks have been
  * done by the caller (the low-level page fault routine in most cases).
  * Thus we can safely just mark it writable once we've done any necessary
@@ -2097,7 +2101,7 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int reuse = 0, ret = 0;
 	int page_mkwrite = 0;
 	struct page *dirty_page = NULL;
-
+	/* 找到原有页 */
 	old_page = vm_normal_page(vma, address, orig_pte);
 	if (!old_page) {
 		/*
@@ -3059,7 +3063,9 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 	spinlock_t *ptl;
 
 	entry = *pte;
+	/* 如若页不存在 */
 	if (!pte_present(entry)) {
+		/* 如若条目不存在 */
 		if (pte_none(entry)) {
 			if (vma->vm_ops) {
 				if (likely(vma->vm_ops->fault))
@@ -3073,18 +3079,21 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 			return do_anonymous_page(mm, vma, address,
 						 pte, pmd, flags);
 		}
+		/* 如若是文件类型的 pte */
 		if (pte_file(entry))
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
 		return do_swap_page(mm, vma, address,
 					pte, pmd, flags, entry);
 	}
-
+	/* 如若页存在 */
 	ptl = pte_lockptr(mm, pmd);
 	spin_lock(ptl);
 	if (unlikely(!pte_same(*pte, entry)))
 		goto unlock;
+	/*  如若是写错误且页表存在 */
 	if (flags & FAULT_FLAG_WRITE) {
+		/* 如若可读不可写,则表示是 cow */
 		if (!pte_write(entry))
 			return do_wp_page(mm, vma, address,
 					pte, pmd, ptl, entry);

@@ -1406,6 +1406,9 @@ static int rmap_walk_file(struct page *page, int (*rmap_one)(struct page *,
 	return ret;
 }
 
+/**
+ * 反向映射,通过 page 找到所有映射了该 page 的 vma,以及映射的虚拟地址,以回调的形式遍历
+ */
 int rmap_walk(struct page *page, int (*rmap_one)(struct page *,
 		struct vm_area_struct *, unsigned long, void *), void *arg)
 {

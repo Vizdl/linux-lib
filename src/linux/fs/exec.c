@@ -333,7 +333,7 @@ int bprm_mm_init(struct linux_binprm *bprm)
 {
 	int err;
 	struct mm_struct *mm = NULL;
-
+	// 创建 mm 内存
 	bprm->mm = mm = mm_alloc();
 	err = -ENOMEM;
 	if (!mm)
@@ -1017,6 +1017,7 @@ void setup_new_exec(struct linux_binprm * bprm)
 				tcomm[i++] = ch;
 	}
 	tcomm[i] = '\0';
+	// 更换 task 名字
 	set_task_comm(current, tcomm);
 
 	/* Set the new mm task size. We have to do that late because it may
@@ -1232,6 +1233,7 @@ EXPORT_SYMBOL(remove_arg_zero);
 
 /*
  * cycle the list of binary formats handler, until one recognizes the image
+ * 循环二进制格式处理程序的列表，直到识别出该图像
  */
 int search_binary_handler(struct linux_binprm *bprm,struct pt_regs *regs)
 {
@@ -1254,6 +1256,7 @@ int search_binary_handler(struct linux_binprm *bprm,struct pt_regs *regs)
 	retval = -ENOENT;
 	for (try=0; try<2; try++) {
 		read_lock(&binfmt_lock);
+		/* 循环二进制格式处理程序的列表，直到识别出该图像 */
 		list_for_each_entry(fmt, &formats, lh) {
 			int (*fn)(struct linux_binprm *, struct pt_regs *) = fmt->load_binary;
 			if (!fn)
@@ -1383,6 +1386,7 @@ int do_execve(char * filename,
 		goto out;
 
 	current->flags &= ~PF_KTHREAD;
+	/* 这里通过修改寄存器导致返回用户态返回到指定位置 */
 	retval = search_binary_handler(bprm,regs);
 	if (retval < 0)
 		goto out;

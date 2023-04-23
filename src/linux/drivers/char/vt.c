@@ -2963,14 +2963,22 @@ static struct cdev vc0_cdev;
 
 int __init vty_init(const struct file_operations *console_fops)
 {
+	/**
+	 * 初始化字符设备 /dev/tty0 (4:0)
+	 * 该设备比较特殊,所以要单独开辟
+	 * /dev/tty0 是当前 tty 的一个别名
+	 */
 	cdev_init(&vc0_cdev, console_fops);
 	if (cdev_add(&vc0_cdev, MKDEV(TTY_MAJOR, 0), 1) ||
 	    register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, "/dev/vc/0") < 0)
 		panic("Couldn't register /dev/tty0 driver\n");
 	device_create(tty_class, NULL, MKDEV(TTY_MAJOR, 0), NULL, "tty0");
 
+	/**
+	 * 这是什么?
+	 */
 	vcs_init();
-
+	/* 创建 tty_driver 内存 */
 	console_driver = alloc_tty_driver(MAX_NR_CONSOLES);
 	if (!console_driver)
 		panic("Couldn't allocate console driver\n");
@@ -2984,7 +2992,11 @@ int __init vty_init(const struct file_operations *console_fops)
 	if (default_utf8)
 		console_driver->init_termios.c_iflag |= IUTF8;
 	console_driver->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS;
+	/* 设置 tty_driver 的 tty_operations */
 	tty_set_operations(console_driver, &con_ops);
+	/**
+	 * 这里会创建 /dev/tty1 - /dev/tty63 (63 是由 MAX_NR_CONSOLES 决定的)
+	 */
 	if (tty_register_driver(console_driver))
 		panic("Couldn't register console driver\n");
 	kbd_init();

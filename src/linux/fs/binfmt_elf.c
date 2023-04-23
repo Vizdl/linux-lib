@@ -632,7 +632,7 @@ static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs)
 	end_code = 0;
 	start_data = 0;
 	end_data = 0;
-
+	// 遍历所有段
 	for (i = 0; i < loc->elf_ex.e_phnum; i++) {
 		if (elf_ppnt->p_type == PT_INTERP) {
 			/* This is the program interpreter used for

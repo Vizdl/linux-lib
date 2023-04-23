@@ -279,14 +279,26 @@ struct tty_operations {
 struct tty_driver {
 	int	magic;		/* magic number for this structure */
 	struct kref kref;	/* Reference management */
+	/**
+	 * 对外提供的字符设备
+	 */
 	struct cdev cdev;
 	struct module	*owner;
 	const char	*driver_name;
+	/**
+	 * 对应字符设备名
+	 */
 	const char	*name;
 	int	name_base;	/* offset of printed name */
 	int	major;		/* major device number */
+	/**
+	 * 最小的从设备号
+	 */
 	int	minor_start;	/* start of minor device number */
 	int	minor_num;	/* number of *possible* devices */
+	/**
+	 * 驱动要开辟的数量 
+	 */
 	int	num;		/* number of devices allocated */
 	short	type;		/* type of tty driver */
 	short	subtype;	/* subtype of tty driver */

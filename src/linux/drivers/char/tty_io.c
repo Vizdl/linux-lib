@@ -2587,11 +2587,17 @@ long tty_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		break;
 	}
+	/**
+	 * 分发 ioctl 到具体 tty 去处理
+	 */
 	if (tty->ops->ioctl) {
 		retval = (tty->ops->ioctl)(tty, file, cmd, arg);
 		if (retval != -ENOIOCTLCMD)
 			return retval;
 	}
+	/**
+	 * 分发 ioctl 到具体 tty 所属 ldisc 去处理
+	 */
 	ld = tty_ldisc_ref_wait(tty);
 	retval = -EINVAL;
 	if (ld->ops->ioctl) {
@@ -2942,6 +2948,10 @@ int tty_register_driver(struct tty_driver *driver)
 			return -ENOMEM;
 	}
 
+	/**
+	 * 计算设备号,如若主设备号为 0,则随机生成一个
+	 * 否则以 driver->major, driver->minor_start 作为主从设备号
+	 */
 	if (!driver->major) {
 		error = alloc_chrdev_region(&dev, driver->minor_start,
 						driver->num, driver->name);
@@ -2965,7 +2975,12 @@ int tty_register_driver(struct tty_driver *driver)
 		driver->ttys = NULL;
 		driver->termios = NULL;
 	}
-
+	/**
+	 * 根据 driver 设置来决定创建的字符设备
+	 * 主设备号 : driver->major
+	 * 起始从设备号 : driver->minor_start
+	 * 要创建的设备数量 : driver->num
+	 */
 	cdev_init(&driver->cdev, &tty_fops);
 	driver->cdev.owner = driver->owner;
 	error = cdev_add(&driver->cdev, dev, driver->num);

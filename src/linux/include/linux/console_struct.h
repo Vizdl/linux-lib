@@ -20,16 +20,28 @@ struct vt_struct;
 
 #define NPAR 16
 
+/**
+ * 虚拟终端结构
+ */
 struct vc_data {
 	unsigned short	vc_num;			/* Console number */
+	/**
+	 * 屏幕行数与列数
+	 */
 	unsigned int	vc_cols;		/* [#] Console size */
 	unsigned int	vc_rows;
 	unsigned int	vc_size_row;		/* Bytes per row */
 	unsigned int	vc_scan_lines;		/* # of scan lines */
+	/**
+	 * 
+	 */
 	unsigned long	vc_origin;		/* [!] Start of real screen */
 	unsigned long	vc_scr_end;		/* [!] End of real screen */
 	unsigned long	vc_visible_origin;	/* [!] Top of visible window */
 	unsigned int	vc_top, vc_bottom;	/* Scrolling region */
+	/**
+	 * 用来操作控制台
+	 */
 	const struct consw *vc_sw;
 	unsigned short	*vc_screenbuf;		/* In-memory character/attribute buffer */
 	unsigned int	vc_screenbuf_size;
@@ -48,6 +60,9 @@ struct vc_data {
 	unsigned short	vc_s_complement_mask;	/* Saved mouse pointer mask */
 	unsigned int	vc_x, vc_y;		/* Cursor position */
 	unsigned int	vc_saved_x, vc_saved_y;
+	/**
+	 * 光标
+	 */
 	unsigned long	vc_pos;			/* Cursor address */
 	/* fonts */	
 	unsigned short	vc_hi_font_mask;	/* [#] Attribute set for upper 256 chars of font or 0 if not supported */

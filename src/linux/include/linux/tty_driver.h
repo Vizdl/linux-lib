@@ -308,7 +308,7 @@ struct tty_driver {
 	struct tty_driver *other; /* only used for the PTY driver */
 
 	/*
-	 * Pointer to the tty data structures
+	 * 多 TTY 结构
 	 */
 	struct tty_struct **ttys;
 	struct ktermios **termios;

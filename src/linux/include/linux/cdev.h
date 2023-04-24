@@ -10,11 +10,29 @@ struct inode;
 struct module;
 
 struct cdev {
+	/**
+	 * 内嵌的内核对象.
+ 	 */
 	struct kobject kobj;
+	/**
+	 * 所属模块
+	 */
 	struct module *owner;
+	/**
+	 * 字符设备操作符
+	 */
 	const struct file_operations *ops;
+	/**
+	 * 引用此设备的文件结点链表的头
+	 */
 	struct list_head list;
+	/**
+	 * 第一个字符设备号 
+	 */
 	dev_t dev;
+	/**
+	 * 设备个数 
+	 */
 	unsigned int count;
 };
 

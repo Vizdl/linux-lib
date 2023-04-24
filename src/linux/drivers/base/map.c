@@ -101,6 +101,9 @@ struct kobject *kobj_lookup(struct kobj_map *domain, dev_t dev, int *index)
 
 retry:
 	mutex_lock(domain->lock);
+	/**
+	 * 主设备号的桶,遍历链表
+	 */
 	for (p = domain->probes[MAJOR(dev) % 255]; p; p = p->next) {
 		struct kobject *(*probe)(dev_t, int *, void *);
 		struct module *owner;

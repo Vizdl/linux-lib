@@ -48,10 +48,22 @@ static DEFINE_MUTEX(chrdevs_lock);
 
 static struct char_device_struct {
 	struct char_device_struct *next;
+	/**
+	 * 主设备号
+	*/
 	unsigned int major;
+	/**
+	 * 从设备号
+	 */
 	unsigned int baseminor;
 	int minorct;
+	/**
+	 * 设备名
+	 */
 	char name[64];
+	/**
+	 * 所属的 cdev
+	 */
 	struct cdev *cdev;		/* will die */
 } *chrdevs[CHRDEV_MAJOR_HASH_SIZE];
 
@@ -79,14 +91,21 @@ void chrdev_show(struct seq_file *f, off_t offset)
 
 /*
  * Register a single major with a specified minor range.
+ * 注册一个单独的属于某个主设备的从设备
  *
  * If major == 0 this functions will dynamically allocate a major and return
  * its number.
+ * 如果major==0，此函数将动态分配一个major并返回其编号。
  *
  * If major > 0 this function will attempt to reserve the passed range of
  * minors and will return zero on success.
- *
+ * 如果主要>0，此功能将尝试保留从设备的通过范围，并在成功时返回零
+ * 
  * Returns a -ve errno on failure.
+ * major : 要注册的主设备号
+ * baseminor : 要注册的从设备号
+ * minorct : 这个意义很奇怪
+ * name : 设备名
  */
 static struct char_device_struct *
 __register_chrdev_region(unsigned int major, unsigned int baseminor,
@@ -95,7 +114,7 @@ __register_chrdev_region(unsigned int major, unsigned int baseminor,
 	struct char_device_struct *cd, **cp;
 	int ret = 0;
 	int i;
-
+	/* 创建一个 char_device */
 	cd = kzalloc(sizeof(struct char_device_struct), GFP_KERNEL);
 	if (cd == NULL)
 		return ERR_PTR(-ENOMEM);
@@ -121,9 +140,12 @@ __register_chrdev_region(unsigned int major, unsigned int baseminor,
 	cd->baseminor = baseminor;
 	cd->minorct = minorct;
 	strlcpy(cd->name, name, sizeof(cd->name));
-
+	/* 找到主设备对应的索引 */
 	i = major_to_index(major);
-
+	/**
+	 * 寻找插入点
+	 * 如若 (对方主设备号大于自己) 或 ((主设备等于自己)且(从设备号大于自己 或 从设备号加上一个奇怪的值大于自己))
+	 */
 	for (cp = &chrdevs[i]; *cp; cp = &(*cp)->next)
 		if ((*cp)->major > major ||
 		    ((*cp)->major == major &&
@@ -195,7 +217,9 @@ int register_chrdev_region(dev_t from, unsigned count, const char *name)
 	struct char_device_struct *cd;
 	dev_t to = from + count;
 	dev_t n, next;
-
+	/**
+	 * 从 from 创建 count 个 char_device_struct
+	 */
 	for (n = from; n < to; n = next) {
 		next = MKDEV(MAJOR(n)+1, 0);
 		if (next > to)
@@ -338,6 +362,9 @@ void __unregister_chrdev(unsigned int major, unsigned int baseminor,
 
 static DEFINE_SPINLOCK(cdev_lock);
 
+/**
+ * 增加引用计数
+ */
 static struct kobject *cdev_get(struct cdev *p)
 {
 	struct module *owner = p->owner;
@@ -351,6 +378,9 @@ static struct kobject *cdev_get(struct cdev *p)
 	return kobj;
 }
 
+/**
+ * 减小引用计数
+ */
 void cdev_put(struct cdev *p)
 {
 	if (p) {
@@ -370,20 +400,35 @@ static int chrdev_open(struct inode *inode, struct file *filp)
 	int ret = 0;
 
 	spin_lock(&cdev_lock);
+	// 获取 cdev
 	p = inode->i_cdev;
+	// 如若为空
 	if (!p) {
 		struct kobject *kobj;
 		int idx;
 		spin_unlock(&cdev_lock);
+		// 根据主从设备号找到对应的 kobj
 		kobj = kobj_lookup(cdev_map, inode->i_rdev, &idx);
 		if (!kobj)
 			return -ENXIO;
+		// 从 kobj 找到所属 cdev
 		new = container_of(kobj, struct cdev, kobj);
+		/**
+		 * 这里上锁保护,放置其他进程同步修改 inode->i_cev
+		 */
 		spin_lock(&cdev_lock);
 		/* Check i_cdev again in case somebody beat us to it while
 		   we dropped the lock. */
+		/**
+		 * 再次判断是否已经被打开
+		 * 如若未打开则添加到 inode 中
+		 * 如若打开了,添加引用计数
+		 */
 		p = inode->i_cdev;
 		if (!p) {
+			/**
+			 * 将设备与文件节点绑定起来
+			 */
 			inode->i_cdev = p = new;
 			list_add(&inode->i_devices, &p->list);
 			new = NULL;
@@ -397,6 +442,9 @@ static int chrdev_open(struct inode *inode, struct file *filp)
 		return ret;
 
 	ret = -ENXIO;
+	/**
+	 * 获取文件操作集,获取成功执行 open 
+	 */
 	filp->f_op = fops_get(p->ops);
 	if (!filp->f_op)
 		goto out_cdev_put;
@@ -470,8 +518,8 @@ static int exact_lock(dev_t dev, void *data)
 /**
  * cdev_add() - add a char device to the system
  * @p: the cdev structure for the device
- * @dev: the first device number for which this device is responsible
- * @count: the number of consecutive minor numbers corresponding to this
+ * @dev: the first device number for which this device is responsible 第一个设备 id
+ * @count: the number of consecutive minor numbers corresponding to this 从设备数
  *         device
  *
  * cdev_add() adds the device represented by @p to the system, making it
@@ -481,6 +529,9 @@ int cdev_add(struct cdev *p, dev_t dev, unsigned count)
 {
 	p->dev = dev;
 	p->count = count;
+	/**
+	 * 这里的映射是区间的,也就是
+	 */
 	return kobj_map(cdev_map, dev, count, NULL, exact_match, exact_lock, p);
 }
 

@@ -600,6 +600,9 @@ static void hide_cursor(struct vc_data *vc)
 	hide_softcursor(vc);
 }
 
+/**
+ * 设置光标
+ */
 static void set_cursor(struct vc_data *vc)
 {
 	if (!IS_FG(vc) || console_blanked ||
@@ -764,6 +767,9 @@ int vc_allocate(unsigned int currcons)	/* return 0 on success */
 	    /* although the numbers above are not valid since long ago, the
 	       point is still up-to-date and the comment still has its value
 	       even if only as a historical artifact.  --mj, July 1998 */
+		/**
+		 * 分配 vc 的内存,并初始化。
+		 */
 	    param.vc = vc = kzalloc(sizeof(struct vc_data), GFP_KERNEL);
 	    if (!vc)
 		return -ENOMEM;
@@ -772,11 +778,14 @@ int vc_allocate(unsigned int currcons)	/* return 0 on success */
 	    visual_init(vc, currcons, 1);
 	    if (!*vc->vc_uni_pagedir_loc)
 		con_set_default_unimap(vc);
+		/**
+		 * 申请屏幕 buff
+		 */
 	    vc->vc_screenbuf = kmalloc(vc->vc_screenbuf_size, GFP_KERNEL);
 	    if (!vc->vc_screenbuf) {
-		kfree(vc);
-		vc_cons[currcons].d = NULL;
-		return -ENOMEM;
+			kfree(vc);
+			vc_cons[currcons].d = NULL;
+			return -ENOMEM;
 	    }
 
 	    /* If no drivers have overridden us and the user didn't pass a
@@ -2126,6 +2135,9 @@ static int do_con_write(struct tty_struct *tty, const unsigned char *buf, int co
 	might_sleep();
 
 	acquire_console_sem();
+	/**
+	 * 取得 vc
+	 */
 	vc = tty->driver_data;
 	if (vc == NULL) {
 		printk(KERN_ERR "vt: argh, driver_data is NULL !\n");
@@ -2149,7 +2161,9 @@ static int do_con_write(struct tty_struct *tty, const unsigned char *buf, int co
 		hide_cursor(vc);
 
 	param.vc = vc;
-
+	/**
+	 * 
+	 */
 	while (!tty->stopped && count) {
 		int orig = *buf;
 		c = orig;
@@ -2163,7 +2177,11 @@ static int do_con_write(struct tty_struct *tty, const unsigned char *buf, int co
 		/* Do no translation at all in control states */
 		if (vc->vc_state != ESnormal) {
 			tc = c;
-		} else if (vc->vc_utf && !vc->vc_disp_ctrl) {
+		} 
+		/**
+		 * 如若是 utf ?
+		 */
+		else if (vc->vc_utf && !vc->vc_disp_ctrl) {
 		    /* Combine UTF-8 into Unicode in vc_utf_char.
 		     * vc_utf_count is the number of continuation bytes still
 		     * expected to arrive.
@@ -2193,40 +2211,40 @@ rescan_last_byte:
 			    c = 0xfffd;
 			}
 		    } else {
-			/* Single ASCII byte or first byte of a sequence received */
-			if (vc->vc_utf_count) {
-			    /* Continuation byte expected */
-			    rescan = 1;
-			    vc->vc_utf_count = 0;
-			    c = 0xfffd;
-			} else if (c > 0x7f) {
-			    /* First byte of a multibyte sequence received */
-			    vc->vc_npar = 0;
-			    if ((c & 0xe0) == 0xc0) {
-				vc->vc_utf_count = 1;
-				vc->vc_utf_char = (c & 0x1f);
-			    } else if ((c & 0xf0) == 0xe0) {
-				vc->vc_utf_count = 2;
-				vc->vc_utf_char = (c & 0x0f);
-			    } else if ((c & 0xf8) == 0xf0) {
-				vc->vc_utf_count = 3;
-				vc->vc_utf_char = (c & 0x07);
-			    } else if ((c & 0xfc) == 0xf8) {
-				vc->vc_utf_count = 4;
-				vc->vc_utf_char = (c & 0x03);
-			    } else if ((c & 0xfe) == 0xfc) {
-				vc->vc_utf_count = 5;
-				vc->vc_utf_char = (c & 0x01);
-			    } else {
-				/* 254 and 255 are invalid */
-				c = 0xfffd;
-			    }
-			    if (vc->vc_utf_count) {
-				/* Still need some bytes */
-				continue;
-			    }
-			}
-			/* Nothing to do if an ASCII byte was received */
+				/* Single ASCII byte or first byte of a sequence received */
+				if (vc->vc_utf_count) {
+					/* Continuation byte expected */
+					rescan = 1;
+					vc->vc_utf_count = 0;
+					c = 0xfffd;
+				} else if (c > 0x7f) {
+					/* First byte of a multibyte sequence received */
+					vc->vc_npar = 0;
+					if ((c & 0xe0) == 0xc0) {
+					vc->vc_utf_count = 1;
+					vc->vc_utf_char = (c & 0x1f);
+					} else if ((c & 0xf0) == 0xe0) {
+					vc->vc_utf_count = 2;
+					vc->vc_utf_char = (c & 0x0f);
+					} else if ((c & 0xf8) == 0xf0) {
+					vc->vc_utf_count = 3;
+					vc->vc_utf_char = (c & 0x07);
+					} else if ((c & 0xfc) == 0xf8) {
+					vc->vc_utf_count = 4;
+					vc->vc_utf_char = (c & 0x03);
+					} else if ((c & 0xfe) == 0xfc) {
+					vc->vc_utf_count = 5;
+					vc->vc_utf_char = (c & 0x01);
+					} else {
+					/* 254 and 255 are invalid */
+					c = 0xfffd;
+					}
+					if (vc->vc_utf_count) {
+					/* Still need some bytes */
+					continue;
+					}
+				}
+				/* Nothing to do if an ASCII byte was received */
 		    }
 		    /* End of UTF-8 decoding. */
 		    /* c is the received character, or U+FFFD for invalid sequences. */
@@ -2302,7 +2320,9 @@ rescan_last_byte:
 				}
 				FLUSH
 			}
-
+			/**
+			 * 真正地去写
+			*/
 			while (1) {
 				if (vc->vc_need_wrap || vc->vc_decim)
 					FLUSH
@@ -2791,6 +2811,7 @@ static int con_open(struct tty_struct *tty, struct file *filp)
 	int ret = 0;
 
 	acquire_console_sem();
+	// 创建并初始化 vc_data
 	if (tty->driver_data == NULL) {
 		ret = vc_allocate(currcons);
 		if (ret == 0) {
@@ -2999,6 +3020,9 @@ int __init vty_init(const struct file_operations *console_fops)
 	 */
 	if (tty_register_driver(console_driver))
 		panic("Couldn't register console driver\n");
+	/**
+	 * ???
+	 */
 	kbd_init();
 	console_map_init();
 #ifdef CONFIG_MDA_CONSOLE

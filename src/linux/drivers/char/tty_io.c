@@ -406,6 +406,10 @@ static long hung_up_tty_compat_ioctl(struct file *file,
 	return cmd == TIOCSPGRP ? -ENOTTY : -EIO;
 }
 
+/**
+ * 可以说 tty_fops 其实就是 cdev 套壳 ldisc,
+ * ntty ldisc 则是套壳 tty driver 
+ */
 static const struct file_operations tty_fops = {
 	.llseek		= no_llseek,
 	.read		= tty_read,
@@ -1129,6 +1133,7 @@ static void pty_line_name(struct tty_driver *driver, int index, char *p)
  *	buffer.
  *
  *	Locking: None
+ *	生成 tty名字格式
  */
 static void tty_line_name(struct tty_driver *driver, int index, char *p)
 {
@@ -2843,7 +2848,9 @@ struct device *tty_register_device(struct tty_driver *driver, unsigned index,
 		pty_line_name(driver, index, name);
 	else
 		tty_line_name(driver, index, name);
-
+	/**
+	 * 建立 devno 与 路径之间的关联
+	 */
 	return device_create(tty_class, device, dev, NULL, name);
 }
 EXPORT_SYMBOL(tty_register_device);
@@ -2997,6 +3004,9 @@ int tty_register_driver(struct tty_driver *driver)
 	mutex_unlock(&tty_mutex);
 
 	if (!(driver->flags & TTY_DRIVER_DYNAMIC_DEV)) {
+		/**
+		 * 添加了很多个空的设备? 
+		 */
 		for (i = 0; i < driver->num; i++)
 		    tty_register_device(driver, i, NULL);
 	}

@@ -34,11 +34,17 @@ struct consw {
 	void	(*con_init)(struct vc_data *, int);
 	void	(*con_deinit)(struct vc_data *);
 	void	(*con_clear)(struct vc_data *, int, int, int, int);
+	/**
+	 * 放置一个字符串
+	 */
 	void	(*con_putc)(struct vc_data *, int, int, int);
 	void	(*con_putcs)(struct vc_data *, const unsigned short *, int, int, int);
 	void	(*con_cursor)(struct vc_data *, int);
 	int	(*con_scroll)(struct vc_data *, int, int, int, int);
 	void	(*con_bmove)(struct vc_data *, int, int, int, int, int, int);
+	/**
+	 * 控制台切换
+	 */
 	int	(*con_switch)(struct vc_data *);
 	int	(*con_blank)(struct vc_data *, int, int);
 	int	(*con_font_set)(struct vc_data *, struct console_font *, unsigned);

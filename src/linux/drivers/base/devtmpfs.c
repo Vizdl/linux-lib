@@ -369,7 +369,9 @@ int __init devtmpfs_init(void)
 	int err;
 	struct vfsmount *mnt;
 	char options[] = "mode=0755";
-
+	/**
+	 * 注册文件系统
+	 */
 	err = register_filesystem(&dev_fs_type);
 	if (err) {
 		printk(KERN_ERR "devtmpfs: unable to register devtmpfs "

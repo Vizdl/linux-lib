@@ -30,6 +30,9 @@ struct vc_data {
 	 */
 	unsigned int	vc_cols;		/* [#] Console size */
 	unsigned int	vc_rows;
+	/**
+	 * 每列的字节数
+	 */
 	unsigned int	vc_size_row;		/* Bytes per row */
 	unsigned int	vc_scan_lines;		/* # of scan lines */
 	/**

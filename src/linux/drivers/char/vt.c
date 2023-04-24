@@ -291,6 +291,9 @@ void schedule_console_callback(void)
 	schedule_work(&console_work);
 }
 
+/**
+ * 屏幕上滚
+ */
 static void scrup(struct vc_data *vc, unsigned int t, unsigned int b, int nr)
 {
 	unsigned short *d, *s;
@@ -301,6 +304,7 @@ static void scrup(struct vc_data *vc, unsigned int t, unsigned int b, int nr)
 		return;
 	if (CON_IS_VISIBLE(vc) && vc->vc_sw->con_scroll(vc, t, b, SM_UP, nr))
 		return;
+	
 	d = (unsigned short *)(vc->vc_origin + vc->vc_size_row * t);
 	s = (unsigned short *)(vc->vc_origin + vc->vc_size_row * (t + nr));
 	scr_memmovew(d, s, (b - t - nr) * vc->vc_size_row);
@@ -308,6 +312,9 @@ static void scrup(struct vc_data *vc, unsigned int t, unsigned int b, int nr)
 		    vc->vc_size_row * nr);
 }
 
+/**
+ * 屏幕下滚
+ */
 static void scrdown(struct vc_data *vc, unsigned int t, unsigned int b, int nr)
 {
 	unsigned short *s;
@@ -654,6 +661,10 @@ static void clear_buffer_attributes(struct vc_data *vc)
 	}
 }
 
+
+/**
+ * 根据给定虚拟终端的缓冲区中的内容，在屏幕上重新绘制整个终端界面。 
+ */
 void redraw_screen(struct vc_data *vc, int is_switch)
 {
 	int redraw = 0;
@@ -1105,15 +1116,23 @@ void scrollfront(struct vc_data *vc, int lines)
 	scrolldelta(lines);
 }
 
+/**
+ * 收到一个回车键
+ */
 static void lf(struct vc_data *vc)
 {
-    	/* don't scroll if above bottom of scrolling region, or
+	/* 
+	 * don't scroll if above bottom of scrolling region, or
 	 * if below scrolling region
+	 * 如果在滚动区域的底部上方，或者在滚动区域下方，请不要滚动
 	 */
-    	if (vc->vc_y + 1 == vc->vc_bottom)
+	if (vc->vc_y + 1 == vc->vc_bottom)
 		scrup(vc, vc->vc_top, vc->vc_bottom, 1);
 	else if (vc->vc_y < vc->vc_rows - 1) {
-	    	vc->vc_y++;
+		/**
+		 * 下一行
+		 */
+		vc->vc_y++;
 		vc->vc_pos += vc->vc_size_row;
 	}
 	vc->vc_need_wrap = 0;
@@ -1678,6 +1697,7 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
 	/*
 	 *  Control characters can be used in the _middle_
 	 *  of an escape sequence.
+	 *  可以在转义序列的_middle_中使用控制字符。
 	 */
 	switch (c) {
 	case 0:
@@ -2369,6 +2389,9 @@ rescan_last_byte:
 			continue;
 		}
 		FLUSH
+		/**
+		 * 控制键
+		 */
 		do_con_trol(tty, vc, orig);
 	}
 	FLUSH

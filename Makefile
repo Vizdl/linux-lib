@@ -1,4 +1,4 @@
-.PHONY : build-Docker-Image run-Docker-Image clean-Docker-Image
+.PHONY : build-Docker-Image run-Docker-Image clean-Docker-Image image
 
 build-Docker-Image :
 	sudo docker build -t linux-lib:latest Docker --build-arg BUILDKIT_INLINE_CACHE=1 
@@ -20,6 +20,14 @@ image :
 
 gdb :
 	qemu-system-x86_64 -kernel src/linux/arch/x86_64/boot/bzImage -s -S -append "console=ttyS0" -nographic
+
+qemu :
+	qemu-system-x86_64 -nographic \
+		-machine ubuntu \
+		-smp 4 -m 2G \
+		-append "root=/dev/ram0" \
+		-initrd ./build/rootfs.img \
+		-kernel ./src/linux/arch/x86_64/boot/bzImage
 
 dockerdefconfig :
 	sudo docker run \

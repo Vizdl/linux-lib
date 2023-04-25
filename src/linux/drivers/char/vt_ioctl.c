@@ -1344,6 +1344,9 @@ eperm:
 void reset_vc(struct vc_data *vc)
 {
 	vc->vc_mode = KD_TEXT;
+	/**
+	 * 设置对应的键盘?
+	 */
 	kbd_table[vc->vc_num].kbdmode = default_utf8 ? VC_UNICODE : VC_XLATE;
 	vc->vt_mode.mode = VT_AUTO;
 	vc->vt_mode.waitv = 0;

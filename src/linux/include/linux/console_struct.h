@@ -28,10 +28,10 @@ struct vc_data {
 	/**
 	 * 屏幕行数与列数
 	 */
-	unsigned int	vc_cols;		/* [#] Console size */
-	unsigned int	vc_rows;
+	unsigned int	vc_cols;		/* 行数 [#] Console size */
+	unsigned int	vc_rows;		/* 列数 */
 	/**
-	 * 每列的字节数
+	 * 每一行的字节数, 初始化为 vc_size_row << clos
 	 */
 	unsigned int	vc_size_row;		/* Bytes per row */
 	unsigned int	vc_scan_lines;		/* # of scan lines */
@@ -47,10 +47,19 @@ struct vc_data {
 	 */
 	const struct consw *vc_sw;
 	unsigned short	*vc_screenbuf;		/* In-memory character/attribute buffer */
+	/**
+	 * 当前 buff 大小,初始值为 vc_rows * vc_size_row
+	 */
 	unsigned int	vc_screenbuf_size;
+	/**
+	 * 虚拟控制台模式 : KD_TEXT, ...
+	 */
 	unsigned char	vc_mode;		/* KD_TEXT, ... */
 	/* attributes for all characters on screen */
 	unsigned char	vc_attr;		/* Current attributes */
+	/**
+	 * 默认颜色
+	 */
 	unsigned char	vc_def_color;		/* Default colors */
 	unsigned char	vc_color;		/* Foreground & background */
 	unsigned char	vc_s_color;		/* Saved foreground & background */
@@ -72,13 +81,22 @@ struct vc_data {
 	struct console_font vc_font;		/* Current VC font set */
 	unsigned short	vc_video_erase_char;	/* Background erase character */
 	/* VT terminal data */
+	/**
+	 * 当前虚拟客户端状态
+	 */
 	unsigned int	vc_state;		/* Escape sequence parser state */
 	unsigned int	vc_npar,vc_par[NPAR];	/* Parameters of current escape sequence */
 	struct tty_struct *vc_tty;		/* TTY we are attached to */
 	/* data for manual vt switching */
+	/**
+	 * 
+	 */
 	struct vt_mode	vt_mode;
 	struct pid 	*vt_pid;
 	int		vt_newvt;
+	/**
+	 * 等待队列
+	 */
 	wait_queue_head_t paste_wait;
 	/* mode flags */
 	unsigned int	vc_charset	: 1;	/* Character set G0 / G1 */
@@ -107,10 +125,13 @@ struct vc_data {
 	unsigned int	vc_need_wrap	: 1;
 	unsigned int	vc_can_do_color	: 1;
 	unsigned int	vc_report_mouse : 2;
-	unsigned char	vc_utf		: 1;	/* Unicode UTF-8 encoding */
+	unsigned char	vc_utf		: 1;	/* 是否支持 Unicode UTF-8 encoding */
 	unsigned char	vc_utf_count;
 		 int	vc_utf_char;
 	unsigned int	vc_tab_stop[8];		/* Tab stops. 256 columns. */
+	/**
+	 * vga 颜色表
+	 */
 	unsigned char   vc_palette[16*3];       /* Colour palette for VGA+ */
 	unsigned short * vc_translate;
 	unsigned char 	vc_G0_charset;

@@ -105,12 +105,19 @@
 #include <asm/system.h>
 #include <linux/uaccess.h>
 
+/**
+ * CON 驱动个数
+ */
 #define MAX_NR_CON_DRIVER 16
-
+/**
+ * con_driver 驱动属性
+ */
 #define CON_DRIVER_FLAG_MODULE 1
 #define CON_DRIVER_FLAG_INIT   2
 #define CON_DRIVER_FLAG_ATTR   4
-
+/**
+ * con_driver 定义
+ */
 struct con_driver {
 	const struct consw *con;
 	const char *desc;
@@ -120,8 +127,13 @@ struct con_driver {
 	int last;
 	int flag;
 };
-
+/**
+ * con_driver 驱动全局数组
+ */
 static struct con_driver registered_con_driver[MAX_NR_CON_DRIVER];
+/**
+ * 默认 consw
+ */
 const struct consw *conswitchp;
 
 /* A bitmap for codes <32. A bit of 1 indicates that the code
@@ -137,7 +149,9 @@ const struct consw *conswitchp;
  */
 #define DEFAULT_BELL_PITCH	750
 #define DEFAULT_BELL_DURATION	(HZ/8)
-
+/**
+ * 虚拟控制台
+ */
 struct vc vc_cons [MAX_NR_CONSOLES];
 
 #ifndef VT_SINGLE_DRIVER
@@ -159,11 +173,10 @@ static void blank_screen_t(unsigned long dummy);
 static void set_palette(struct vc_data *vc);
 
 static int printable;		/* Is console ready for printing? */
-int default_utf8 = true;
+int default_utf8 = true;	/* 是否支持 utf-8 */
 module_param(default_utf8, int, S_IRUGO | S_IWUSR);
-int global_cursor_default = -1;
+int global_cursor_default = -1;	/* 默认光标 */
 module_param(global_cursor_default, int, S_IRUGO | S_IWUSR);
-
 static int cur_default = CUR_DEFAULT;
 module_param(cur_default, int, S_IRUGO | S_IWUSR);
 
@@ -180,7 +193,9 @@ static int vesa_blank_mode; /* 0:none 1:suspendV 2:suspendH 3:powerdown */
 static int vesa_off_interval;
 static int blankinterval = 10*60;
 core_param(consoleblank, blankinterval, int, 0444);
-
+/**
+ * 定义
+ */
 static DECLARE_WORK(console_work, console_callback);
 
 /*
@@ -190,6 +205,9 @@ static DECLARE_WORK(console_work, console_callback);
  */
 int fg_console;
 int last_console;
+/**
+ * 想要切换的控制台号
+*/
 int want_console = -1;
 
 /*
@@ -286,6 +304,9 @@ static inline void scrolldelta(int lines)
 	schedule_console_callback();
 }
 
+/**
+ * 唤醒控制台回调任务
+ */
 void schedule_console_callback(void)
 {
 	schedule_work(&console_work);
@@ -625,6 +646,9 @@ static void set_cursor(struct vc_data *vc)
 		hide_cursor(vc);
 }
 
+/**
+ * 设置 vc->vc_origin 以及相关属性
+ */
 static void set_origin(struct vc_data *vc)
 {
 	WARN_CONSOLE_UNLOCKED();
@@ -1049,7 +1073,7 @@ void vc_deallocate(unsigned int currcons)
 unsigned char color_table[] = { 0, 4, 2, 6, 1, 5, 3, 7,
 				       8,12,10,14, 9,13,11,15 };
 
-/* the default colour table, for VGA+ colour systems */
+/* 默认颜色表，适用于VGA+彩色系统 */
 int default_red[] = {0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,
     0x55,0xff,0x55,0xff,0x55,0xff,0x55,0xff};
 int default_grn[] = {0x00,0x00,0xaa,0x55,0x00,0x00,0xaa,0xaa,
@@ -1117,7 +1141,7 @@ void scrollfront(struct vc_data *vc, int lines)
 }
 
 /**
- * 收到一个回车键
+ * LF（Line Feed）：在终端中使用时，相当于按下“换行”键，将光标移动到下一行的起始位置。
  */
 static void lf(struct vc_data *vc)
 {
@@ -1153,6 +1177,9 @@ static void ri(struct vc_data *vc)
 	vc->vc_need_wrap = 0;
 }
 
+/**
+ * CR（Carriage Return）：将光标移动到当前行的起始位置。
+ */
 static inline void cr(struct vc_data *vc)
 {
 	vc->vc_pos -= vc->vc_x << 1;
@@ -1160,6 +1187,9 @@ static inline void cr(struct vc_data *vc)
 	notify_write(vc, '\r');
 }
 
+/**
+ * BS（Backspace）：将光标向左移动一个字符位置。
+ */
 static inline void bs(struct vc_data *vc)
 {
 	if (vc->vc_x) {
@@ -1535,7 +1565,7 @@ static void setterm_command(struct vc_data *vc)
 			else
 				vc->vc_bell_duration = DEFAULT_BELL_DURATION;
 			break;
-		case 12: /* bring specified console to the front */
+		case 12: /* 将指定的控制台放在前面 */
 			if (vc->vc_par[1] >= 1 && vc_cons_allocated(vc->vc_par[1] - 1))
 				set_console(vc->vc_par[1] - 1);
 			break;
@@ -1626,7 +1656,9 @@ static void restore_cur(struct vc_data *vc)
 	update_attr(vc);
 	vc->vc_need_wrap = 0;
 }
-
+/**
+ * 各种终端状态
+ */
 enum { ESnormal, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,
 	EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
 	ESpalette };
@@ -1749,6 +1781,9 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
 		vc->vc_state = ESsquare;
 		return;
 	}
+	/**
+	 * 根据不同状态有不同的含义
+	 */
 	switch(vc->vc_state) {
 	case ESesc:
 		vc->vc_state = ESnormal;
@@ -2182,7 +2217,7 @@ static int do_con_write(struct tty_struct *tty, const unsigned char *buf, int co
 
 	param.vc = vc;
 	/**
-	 * 
+	 * 处理数据流
 	 */
 	while (!tty->stopped && count) {
 		int orig = *buf;
@@ -2194,7 +2229,7 @@ static int do_con_write(struct tty_struct *tty, const unsigned char *buf, int co
 		inverse = 0;
 		width = 1;
 
-		/* Do no translation at all in control states */
+		/* 在控制状态下根本不进行翻译 */
 		if (vc->vc_state != ESnormal) {
 			tc = c;
 		} 
@@ -2277,26 +2312,29 @@ rescan_last_byte:
 		}
 
 		param.c = tc;
+		/* 通知链 */
 		if (atomic_notifier_call_chain(&vt_notifier_list, VT_PREWRITE,
 					&param) == NOTIFY_STOP)
 			continue;
 
-                /* If the original code was a control character we
-                 * only allow a glyph to be displayed if the code is
-                 * not normally used (such as for cursor movement) or
-                 * if the disp_ctrl mode has been explicitly enabled.
-                 * Certain characters (as given by the CTRL_ALWAYS
-                 * bitmap) are always displayed as control characters,
-                 * as the console would be pretty useless without
-                 * them; to display an arbitrary font position use the
-                 * direct-to-font zone in UTF-8 mode.
-                 */
-                ok = tc && (c >= 32 ||
-			    !(vc->vc_disp_ctrl ? (CTRL_ALWAYS >> c) & 1 :
-				  vc->vc_utf || ((CTRL_ACTION >> c) & 1)))
-			&& (c != 127 || vc->vc_disp_ctrl)
-			&& (c != 128+27);
-
+		/* If the original code was a control character we
+		* only allow a glyph to be displayed if the code is
+		* not normally used (such as for cursor movement) or
+		* if the disp_ctrl mode has been explicitly enabled.
+		* Certain characters (as given by the CTRL_ALWAYS
+		* bitmap) are always displayed as control characters,
+		* as the console would be pretty useless without
+		* them; to display an arbitrary font position use the
+		* direct-to-font zone in UTF-8 mode.
+		*/
+		ok = tc && (c >= 32 ||
+		!(vc->vc_disp_ctrl ? (CTRL_ALWAYS >> c) & 1 :
+			vc->vc_utf || ((CTRL_ACTION >> c) & 1)))
+		&& (c != 127 || vc->vc_disp_ctrl)
+		&& (c != 128+27);
+		/**
+		 * 
+		 */
 		if (vc->vc_state == ESnormal && ok) {
 			if (vc->vc_utf && !vc->vc_disp_ctrl) {
 				if (is_double_width(c))
@@ -2410,6 +2448,10 @@ rescan_last_byte:
  * to switch due to a keyboard interrupt).  Synchronization
  * with other console code and prevention of re-entrancy is
  * ensured with console_sem.
+ * 这是控制台切换回调函数。在进程上下文中进行控制台切换允许我们异步执行切换操作（当我们想要由于键盘中断而切换时需要这样做）。 
+ * console_sem 确保与其他控制台代码的同步和防止重入。简单来说，此段话描述了一个用于控制台切换的回调函数，
+ * 并解释了为什么在进程上下文中进行控制台切换可以实现异步操作。同时，它还提到了使用 console_sem 变量确保与其他控制台代码的同步，
+ * 并防止出现重入问题。
  */
 static void console_callback(struct work_struct *ignored)
 {
@@ -2446,6 +2488,9 @@ static void console_callback(struct work_struct *ignored)
 	release_console_sem();
 }
 
+/**
+ * 控制台切换？
+ */
 int set_console(int nr)
 {
 	struct vc_data *vc = vc_cons[fg_console].d;
@@ -2884,6 +2929,12 @@ static int default_underline_color = 3; // cyan (ASCII)
 module_param_named(italic, default_italic_color, int, S_IRUGO | S_IWUSR);
 module_param_named(underline, default_underline_color, int, S_IRUGO | S_IWUSR);
 
+/**
+ * 初始化一个 vt
+ * rows : 初始列
+ * clos : 初始行
+ * do_clean : 是否清除?
+ */
 static void vc_init(struct vc_data *vc, unsigned int rows,
 		    unsigned int cols, int do_clear)
 {
@@ -2931,7 +2982,9 @@ static int __init con_init(void)
 		release_console_sem();
 		return 0;
 	}
-
+	/**
+	 * 初始化 con_driver 数组
+	 */
 	for (i = 0; i < MAX_NR_CON_DRIVER; i++) {
 		struct con_driver *con_driver = &registered_con_driver[i];
 

@@ -289,9 +289,14 @@ SYSCALL_DEFINE4(readlinkat, int, dfd, const char __user *, pathname,
 
 	if (bufsiz <= 0)
 		return -EINVAL;
-
+	/**
+	 * 根据文件名找到路径
+	 */
 	error = user_path_at(dfd, pathname, 0, &path);
 	if (!error) {
+		/**
+		 * 找到 inode 节点
+		 */
 		struct inode *inode = path.dentry->d_inode;
 
 		error = -EINVAL;

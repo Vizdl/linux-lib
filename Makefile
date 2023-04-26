@@ -1,61 +1,75 @@
-.PHONY : build-Docker-Image run-Docker-Image clean-Docker-Image image
+DARCH=x86_64
+.PHONY += build-image run-image clean-image
+.PHONY += defconfig build image
 
-build-Docker-Image :
-	sudo docker build -t linux-lib:latest Docker --build-arg BUILDKIT_INLINE_CACHE=1 
+build-image :
+	sudo docker build -t linux-lib-${DARCH}:latest Docker/${DARCH} --build-arg BUILDKIT_INLINE_CACHE=1 
 
-run-Docker-Image :
+run-image :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	-it linux-lib:latest \
-	/bin/bash
+	-it linux-lib-${DARCH}:latest \
+	/bin/bash &
 
-clean-Docker-Image :
-	docker rmi linux-lib:latest
+clean-image :
+	sudo docker rmi linux-lib-${DARCH}:latest
 
-defconfig :
-	cd src/linux && make x86_64_defconfig
+config :
+	cd src/linux && make defconfig
+
+clean :
+	cd src/linux && make distclean
 
 image :
 	cd src/linux && make bzImage -j64
 
-gdb :
-	qemu-system-x86_64 -kernel src/linux/arch/x86_64/boot/bzImage -s -S -append "console=ttyS0" -nographic
+# gdb :
+# 	qemu-system-x86_64 -kernel src/linux/DARCH/x86_64/boot/bzImage -s -S -append "console=ttyS0" -nographic
+
+		# -machine ubuntu \
+		# -append "root=/dev/ram0" \
+		# -initrd ./build/rootfs.img \
 
 qemu :
 	qemu-system-x86_64 -nographic \
-		-machine ubuntu \
 		-smp 4 -m 2G \
-		-append "root=/dev/ram0" \
-		-initrd ./build/rootfs.img \
-		-kernel ./src/linux/arch/x86_64/boot/bzImage
+		-kernel ./src/linux/arch/x86/boot/bzImage
 
-dockerdefconfig :
+defconfig :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
-	-it linux-lib:latest \
-	make defconfig && \
+	-it linux-lib-${DARCH}:latest \
+	make DARCH=${DARCH} config; \
 	sudo docker rm buildlinux
 
-dockerimage :
+build :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
-	-it linux-lib:latest \
-	make image && \
+	-it linux-lib-${DARCH}:latest \
+	make DARCH=${DARCH} image; \
 	sudo docker rm buildlinux
 
-dockergdb :
+distclean :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	-p 1234:1234 \
-	--name gdb \
-	-itd linux-lib:latest \
-	make gdb
+	--name buildlinux \
+	-it linux-lib-${DARCH}:latest \
+	make DARCH=${DARCH} clean; \
+	sudo docker rm buildlinux
 
-dockersgdb :
-	sudo docker stop gdb; \
-	sudo docker rm gdb
+# dockergdb :
+# 	sudo docker run \
+# 	--volume=${PWD}:/workdir:rw \
+# 	-p 1234:1234 \
+# 	--name gdb \
+# 	-itd linux-lib:latest \
+# 	make gdb
 
-dockerdbg :
-	gdb src/linux/vmlinux -q -ex "target remote localhost:1234"
+# dockersgdb :
+# 	sudo docker stop gdb; \
+# 	sudo docker rm gdb
+
+# dockerdbg :
+# 	gdb src/linux/vmlinux -q -ex "target remote localhost:1234"

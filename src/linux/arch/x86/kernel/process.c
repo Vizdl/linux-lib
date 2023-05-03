@@ -305,12 +305,13 @@ long sys_execve(char __user *name, char __user * __user *argv,
 {
 	long error;
 	char *filename;
-
 	filename = getname(name);
+	printk("%s : begin, filename : %s\n", __func__, filename);
 	error = PTR_ERR(filename);
 	if (IS_ERR(filename))
 		return error;
 	error = do_execve(filename, argv, envp, regs);
+	printk("%s : begin, ret : %ld\n", __func__, error);
 
 #ifdef CONFIG_X86_32
 	if (error == 0) {

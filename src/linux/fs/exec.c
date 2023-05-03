@@ -1385,9 +1385,11 @@ int do_execve(char * filename,
 	if (retval < 0)
 		goto out;
 
+	printk("%s : search_binary_handler begin , filename : %s\n", __func__, filename);
 	current->flags &= ~PF_KTHREAD;
 	/* 这里通过修改寄存器导致返回用户态返回到指定位置 */
 	retval = search_binary_handler(bprm,regs);
+	printk("%s : search_binary_handler end , ret : %d\n", __func__, retval);
 	if (retval < 0)
 		goto out;
 

@@ -15,6 +15,9 @@ endif
 defconfig-in-docker :
 	cd src/linux && make defconfig
 
+menuconfig-in-docker :
+	cd src/linux && make menuconfig
+
 distclean-in-docker :
 	cd src/linux && make distclean
 
@@ -24,6 +27,17 @@ image-in-docker :
 gdb-in-docker :
 	qemu-system-x86_64 -kernel src/linux/arch/${ARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
 
+fs-defconfig-in-docker :
+	cd src/busybox-1.15.3 && make defconfig
+
+fs-menuconfig-in-docker :
+	cd src/busybox-1.15.3 && make menuconfig
+
+fs-image-in-docker :
+	cd src/busybox-1.15.3 && make -j32 && make install && sudo bash rootfs.sh
+
+fs-distclean-in-docker :
+	cd src/busybox-1.15.3 && make distclean
 
 # 在镜像外的操作
 build-image :
@@ -39,12 +53,21 @@ clean-image :
 	sudo docker rmi linux-lib-${RARCH}:latest
 
 run :
-	qemu-system-x86_64 -nographic \
+	sudo qemu-system-x86_64  \
 		-smp 4 -m 2G \
-		-kernel ./src/linux/arch/x86/boot/bzImage
-		# -machine ubuntu \
-		# -append "root=/dev/ram0" \
-		# -initrd ./build/rootfs.img \
+		-kernel ./src/linux/arch/x86/boot/bzImage \
+		-initrd src/busybox-1.15.3/rootfs.img.gz \
+		-append "root=/dev/ram init=/linuxrc"	\
+		-serial file:output.txt
+		# -nographic
+
+menuconfig :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} menuconfig-in-docker; \
+	sudo docker rm buildlinux
 
 defconfig :
 	sudo docker run \
@@ -54,6 +77,38 @@ defconfig :
 	make RARCH=${RARCH} defconfig-in-docker; \
 	sudo docker rm buildlinux
 
+fs-defconfig :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} fs-defconfig-in-docker; \
+	sudo docker rm buildlinux
+
+fs-menuconfig :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} fs-menuconfig-in-docker; \
+	sudo docker rm buildlinux
+
+fs-image : 
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} fs-image-in-docker; \
+	sudo docker rm buildlinux
+
+fs-distclean :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} fs-distclean-in-docker; \
+	sudo docker rm buildlinux
+
 image :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
@@ -61,7 +116,8 @@ image :
 	--memory-reservation ${MEM} \
 	-it linux-lib-${RARCH}:latest \
 	make RARCH=${RARCH} image-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm buildlinux;
+	
 
 distclean :
 	sudo docker run \

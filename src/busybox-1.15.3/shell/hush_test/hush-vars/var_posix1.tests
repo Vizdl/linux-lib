@@ -1,0 +1,48 @@
+unset var
+
+echo Empty:${var#}
+echo Empty:${var##}
+echo Empty:${var#*}
+echo Empty:${var##*}
+echo Empty:${var%}
+echo Empty:${var%%}
+echo Empty:${var%*}
+echo Empty:${var%%*}
+
+var=
+
+echo Empty:${var#}
+echo Empty:${var##}
+echo Empty:${var#*}
+echo Empty:${var##*}
+echo Empty:${var%}
+echo Empty:${var%%}
+echo Empty:${var%*}
+echo Empty:${var%%*}
+
+var=ababcdcd
+
+echo ${var#ab}
+echo ${var##ab}
+echo ${var#a*b}
+echo ${var##a*b}
+echo ${var#?}
+echo ${var##?}
+echo ${var#*}
+echo Empty:${var##*}
+echo ${var#}}_tail
+# UNFIXED BUG: echo ${var#\}}_tail
+
+echo ${var%cd}
+echo ${var%%cd}
+echo ${var%c*d}
+echo ${var%%c*d}
+echo ${var%?}
+echo ${var%%?}
+echo ${var%*}
+echo Empty:${var%%*}
+echo ${var#}}_tail
+# UNFIXED BUG: echo ${var#\}}_tail
+echo ${var%\\*}
+
+echo end

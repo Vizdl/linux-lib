@@ -838,7 +838,11 @@ static noinline int init_post(void)
 	 * trying to recover a really broken machine.
 	 */
 	if (execute_command) {
+		printk(KERN_INFO "execute_command : %s\n", execute_command);
 		run_init_process(execute_command);
+		/**
+		 * 这里 exec 后不应该返回,而是直接回到 init 进程用户态
+		 */
 		printk(KERN_WARNING "Failed to execute %s.  Attempting "
 					"defaults...\n", execute_command);
 	}

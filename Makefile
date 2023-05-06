@@ -1,6 +1,6 @@
 RARCH ?= x86_64
 ARCH ?= x86
-THREADS ?= $(nproc)
+THREADS ?= 4
 MEM ?= 4G
 
 ifeq ("$(RARCH)", "x86_64")
@@ -33,8 +33,8 @@ fs-defconfig-in-docker :
 fs-menuconfig-in-docker :
 	cd src/busybox-1.15.3 && make menuconfig
 
-fs-image-in-docker :
-	cd src/busybox-1.15.3 && make -j32 && make install && sudo bash rootfs.sh
+rootfs-in-docker :
+	cd src/busybox-1.15.3 && make -j$(THREADS) && make install && bash rootfs.sh
 
 fs-distclean-in-docker :
 	cd src/busybox-1.15.3 && make distclean
@@ -93,12 +93,14 @@ fs-menuconfig :
 	make RARCH=${RARCH} fs-menuconfig-in-docker; \
 	sudo docker rm buildlinux
 
-fs-image : 
+# 这里必须要加 --privileged, 否则挂载文件时会提示无权限。
+rootfs : 
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
+	--privileged \
 	--name buildlinux \
 	-it linux-lib-${RARCH}:latest \
-	make RARCH=${RARCH} fs-image-in-docker; \
+	make RARCH=${RARCH} rootfs-in-docker; \
 	sudo docker rm buildlinux
 
 fs-distclean :

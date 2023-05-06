@@ -512,9 +512,10 @@ static void new_init_action(uint8_t action_type, const char *command, const char
 static void parse_inittab(void)
 {
 #if ENABLE_FEATURE_USE_INITTAB
+	int ret = 0;
 	char *token[4];
 	parser_t *parser = config_open2("/etc/inittab", fopen_for_read);
-
+	// printf("%s : comming\n", __func__);
 	if (parser == NULL)
 #endif
 	{
@@ -543,8 +544,9 @@ static void parse_inittab(void)
 	/* optional_tty:ignored_runlevel:action:command
 	 * Delims are not to be collapsed and need exactly 4 tokens
 	 */
-	while (config_read(parser, token, 4, 0, "#:",
-				PARSE_NORMAL & ~(PARSE_TRIM | PARSE_COLLAPSE))) {
+	// printf("%s : parser != NULL && ENABLE_FEATURE_USE_INITTAB\n", __func__);
+	while ((ret = config_read(parser, token, 4, 0, "#:",
+				PARSE_NORMAL & ~(PARSE_TRIM | PARSE_COLLAPSE)))) {
 		/* order must correspond to SYSINIT..RESTART constants */
 		static const char actions[] ALIGN1 =
 			"sysinit\0""wait\0""once\0""respawn\0""askfirst\0"
@@ -563,6 +565,7 @@ static void parse_inittab(void)
 				tty += 5;
 			tty = concat_path_file("/dev/", tty);
 		}
+		// printf("%s : new_init_action[%s]\n", __func__, token);
 		new_init_action(1 << action, token[3], tty);
 		if (tty[0])
 			free(tty);
@@ -571,6 +574,7 @@ static void parse_inittab(void)
 		message(L_LOG | L_CONSOLE, "Bad inittab entry at line %d",
 				parser->lineno);
 	}
+	// printf("%s : config_read ret : %d\n", __func__, ret);
 	config_close(parser);
 #endif
 }
@@ -838,7 +842,7 @@ int init_main(int argc UNUSED_PARAM, char **argv)
 		 * SIGINT on CAD so we can shut things down gracefully... */
 		reboot(RB_DISABLE_CAD); /* misnomer */
 	}
-	printf("aaaa\n");
+	// printf("coming init_main\n");
 	/* Figure out where the default console should be */
 	console_init();
 	set_sane_term();
@@ -961,8 +965,10 @@ int init_main(int argc UNUSED_PARAM, char **argv)
 
 	/* Now run the looping stuff for the rest of forever.
 	 */
+	// printf("Now run the looping stuff for the rest of forever.\n");
 	while (1) {
 		int maybe_WNOHANG;
+		// printf("running the looping stuff for the rest of forever.\n");
 
 		maybe_WNOHANG = check_delayed_sigs();
 

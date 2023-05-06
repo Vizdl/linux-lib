@@ -10,7 +10,7 @@ tmpfs       /tmp            tmpfs        defaults        0        0
 sysfs       /sys            sysfs        defaults        0        0
 EOF
 
-cat etc/init.d/rcS << "EOF"
+cat > etc/init.d/rcS << "EOF"
 echo -e "Welcome to tinyLinux"
 /bin/mount -a
 echo -e "Remounting the root filesystem"
@@ -21,20 +21,14 @@ echo /sbin/mdev > /proc/sys/kernel/hotplug
 mdev -s
 EOF
 
-cat etc/inittab << "EOF"
+cat > etc/inittab << EOF
 ::sysinit:/etc/init.d/rcS
 ::respawn:-/bin/sh
 ::askfirst:-/bin/sh
 ::cttlaltdel:/bin/umount -a -r
-chmod 755 etc/inittab
-cd dev
-mknod console c 5 1
-mknod null c 1 3
-mknod tty1 c 4 1 
 EOF
+
 cd ..
-
-
 rm -rf rootfs.ext3 fs
 dd if=/dev/zero of=./rootfs.ext3 bs=1M count=32
 mkfs.ext3 rootfs.ext3

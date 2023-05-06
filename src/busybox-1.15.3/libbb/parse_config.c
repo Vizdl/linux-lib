@@ -140,6 +140,7 @@ again:
 
 	/* Read one line (handling continuations with backslash) */
 	line = bb_get_chunk_with_continuation(parser->fp, &len, &parser->lineno);
+	// printf("%s : bb_get_chunk_with_continuation[%s]\n", __func__, line ? line : "NULL");
 	if (line == NULL)
 		return 0;
 	parser->line = line;

@@ -30,7 +30,7 @@ char* FAST_FUNC bb_get_chunk_with_continuation(FILE *file, int *end, int *lineno
 	int idx = 0;
 	char *linebuf = NULL;
 	int linebufsz = 0;
-
+	// printf("%s : comming\n", __func__);
 	while ((ch = getc(file)) != EOF) {
 		/* grow the line buffer as necessary */
 		if (idx >= linebufsz) {
@@ -49,6 +49,7 @@ char* FAST_FUNC bb_get_chunk_with_continuation(FILE *file, int *end, int *lineno
 			idx -= 2;
 		}
 	}
+	// printf("%s : line[%s]\n", __func__, linebufsz ? linebufsz : "NULL");
 	if (end)
 		*end = idx;
 	if (linebuf) {

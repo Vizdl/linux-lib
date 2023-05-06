@@ -838,7 +838,7 @@ int init_main(int argc UNUSED_PARAM, char **argv)
 		 * SIGINT on CAD so we can shut things down gracefully... */
 		reboot(RB_DISABLE_CAD); /* misnomer */
 	}
-
+	printf("aaaa\n");
 	/* Figure out where the default console should be */
 	console_init();
 	set_sane_term();

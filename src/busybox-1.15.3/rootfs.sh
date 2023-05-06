@@ -39,7 +39,7 @@ rm -rf rootfs.ext3 fs
 dd if=/dev/zero of=./rootfs.ext3 bs=1M count=32
 mkfs.ext3 rootfs.ext3
 mkdir fs
-sudo mount -o loop rootfs.ext3 ./fs
-sudo cp -rf ./_install/* ./fs
-sudo umount ./fs
+mount -o loop rootfs.ext3 ./fs
+cp -rf ./_install/* ./fs
+umount ./fs
 gzip --best -c rootfs.ext3 > rootfs.img.gz 

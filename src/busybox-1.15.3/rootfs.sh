@@ -4,13 +4,13 @@ mkdir etc dev mnt && mkdir -p proc sys tmp mnt && mkdir -p etc/init.d/
 mknod dev/console c 5 1 && mknod dev/null c 1 3 && mknod dev/tty1 c 4 1
 touch etc/fstab etc/init.d/rcS etc/inittab && chmod 755 etc -R
 
-cat > etc/fstab << "EOF"
+cat > etc/fstab << EOF
 proc        /proc           proc         defaults        0        0
 tmpfs       /tmp            tmpfs        defaults        0        0
 sysfs       /sys            sysfs        defaults        0        0
 EOF
 
-cat > etc/init.d/rcS << "EOF"
+cat > etc/init.d/rcS << EOF
 echo -e "Welcome to tinyLinux"
 /bin/mount -a
 echo -e "Remounting the root filesystem"

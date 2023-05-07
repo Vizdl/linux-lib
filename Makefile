@@ -54,12 +54,11 @@ clean-image :
 
 run :
 	sudo qemu-system-x86_64  \
+		-nographic \
 		-smp 4 -m 2G \
 		-kernel ./src/linux/arch/x86/boot/bzImage \
 		-initrd src/busybox-1.15.3/rootfs.img.gz \
-		-append "root=/dev/ram init=/linuxrc"	\
-		-serial file:output.txt
-		# -nographic
+		-append "root=/dev/ram console=ttyS0 init=/linuxrc"
 
 menuconfig :
 	sudo docker run \

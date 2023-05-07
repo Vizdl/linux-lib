@@ -13,16 +13,59 @@
         建议阅读书籍 : Linux内核设计与实现
     3) linux 的使用
         略
-        
-## 容器快速安装
+
+## 准备开始
+### 1. 容器快速安装
+linux-lib 是依赖容器来编译内核的,所以需要先安装 docker
 ```
 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
 ```
-
-## 如何构建 linux-lib docker 镜像?
-    sudo make build-Docker-Image
-
-## 如何运行镜像
-    sudo make run-Docker-Imag
+### 2. 如何构建 linux-lib docker 镜像?
+```bash
+sudo make build-image
+```
+如若构建失败一般是网络资源问题,请重试。
+### 3. 编译 linux
+#### 3.1 编译生成 linux 默认配置
+```bash
+make defconfig
+```
+#### 3.2 修改 linux 配置将 RAM dist size 设置为 65536
+```bash
+make menuconfig
+```
+可以看见一个 ui 画面,根据下面去找到 `Default RAM disk size` 并回车填入 65536
+```bash
+Device Drivers  --->
+    [*] Block devices  --->
+        (65536) Default RAM disk size (kbytes)
+```
+#### 3.3 编译生成 linux 镜像
+```bash
+make image
+```
+### 4. 编译 busybox 作为 rootfs
+#### 4.1 编译生成 busybox 默认配置
+```bash
+make fs-defconfig
+```
+#### 4.2 修改 busybox 配置将 busybox 二进制文件设置为静态编译
+```bash
+make fs-menuconfig
+```
+可以看见一个 ui 画面,根据下面去找到 `Build BusyBox as a static binary` 并按 `y`
+```bash
+Busybox Settings  --->
+    Build Options  --->
+        [*] Build BusyBox as a static binary (no shared libs)
+```
+#### 4.3 编译生成 rootfs 文件
+```bash
+make rootfs
+```
+### 5. 运行
+```bash
+make run
+```
 ## 推荐书籍
 推荐书籍清单PDF请点击[链接](https://gitee.com/Vizdl/os-books.git)。支持正版,PDF仅供学习使用,有能力的朋友买实体书多多支持一下。

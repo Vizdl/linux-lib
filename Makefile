@@ -15,7 +15,8 @@ BUSYBOX ?= busybox-1.15.3
 CONSOLE ?= ttyS0
 # 镜像名
 IMAGE ?= bzImage
-
+# 机器
+MACHINE=
 
 ifeq ("$(RARCH)", "x86_64")
 	LARCH = x86
@@ -25,6 +26,7 @@ else ifeq ("$(RARCH)", "aarch64")
 	CONSOLE = ttyAMA0
 	LARCH = arm64
 	IMAGE = Image
+	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
 else
 	$(error "unkown arch!!!");
 endif
@@ -67,6 +69,7 @@ fs-distclean-in-docker :
 run-in-docker :
 	qemu-system-${RARCH}  \
 		-nographic \
+		${MACHINE} \
 		-smp 4 -m 2G \
 		-kernel ./src/${KERNEL}/arch/${LARCH}/boot/${IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \

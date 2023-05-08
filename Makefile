@@ -2,6 +2,7 @@ RARCH ?= x86_64
 ARCH ?= x86
 THREADS ?= 4
 MEM ?= 4G
+KERNEL ?= linux-2.6.34
 
 ifeq ("$(RARCH)", "x86_64")
 	ARCH = x86
@@ -13,19 +14,19 @@ endif
 
 # 在镜像环境内的操作
 defconfig-in-docker :
-	cd src/linux && make defconfig
+	cd src/${KERNEL} && make defconfig
 
 menuconfig-in-docker :
-	cd src/linux && make menuconfig
+	cd src/${KERNEL} && make menuconfig
 
 distclean-in-docker :
-	cd src/linux && make distclean
+	cd src/${KERNEL} && make distclean
 
 image-in-docker :
-	cd src/linux && make bzImage -j$(THREADS)
+	cd src/${KERNEL} && make bzImage -j$(THREADS)
 
 gdb-in-docker :
-	qemu-system-x86_64 -kernel src/linux/arch/${ARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
+	qemu-system-x86_64 -kernel src/${KERNEL}/arch/${ARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
 
 fs-defconfig-in-docker :
 	cd src/busybox-1.15.3 && make defconfig
@@ -56,7 +57,7 @@ run :
 	sudo qemu-system-x86_64  \
 		-nographic \
 		-smp 4 -m 2G \
-		-kernel ./src/linux/arch/x86/boot/bzImage \
+		-kernel ./src/${KERNEL}/arch/x86/boot/bzImage \
 		-initrd src/busybox-1.15.3/rootfs.img.gz \
 		-append "root=/dev/ram console=ttyS0 init=/linuxrc"
 
@@ -145,4 +146,4 @@ stopgdb :
 restartgdb : stopgdb rungdb
 
 debug :
-	gdb src/linux/vmlinux -q -ex "target remote localhost:1234"
+	gdb src/${KERNEL}/vmlinux -q -ex "target remote localhost:1234"

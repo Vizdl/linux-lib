@@ -124,6 +124,9 @@ ENTRY(copy_user_generic_unrolled)
 	cmpl $8,%edx
 	jb 20f		/* less then 8 bytes, go to byte copy loop */
 	ALIGN_DESTINATION
+	/**
+	 * 设置 ecx 为要拷贝的次数
+	 */
 	movl %edx,%ecx
 	andl $63,%edx
 	shrl $6,%ecx
@@ -161,8 +164,17 @@ ENTRY(copy_user_generic_unrolled)
 20:	andl %edx,%edx
 	jz 23f
 	movl %edx,%ecx
+	/**
+	 * 将源数据拷贝到 al
+	 */
 21:	movb (%rsi),%al
+	/**
+	 * 将 al 拷贝到目的地址
+	 */
 22:	movb %al,(%rdi)
+	/**
+	 * 自增
+	 */
 	incq %rsi
 	incq %rdi
 	decl %ecx

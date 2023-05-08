@@ -1,12 +1,24 @@
-RARCH ?= x86_64
-ARCH ?= x86
+# 编译的线程数
 THREADS ?= 4
+# 编译时内存限制
 MEM ?= 4G
+
+# 真实 arch
+RARCH ?= $(shell uname -m)
+# 对应 linux 路径名
+LARCH ?= x86
+# 待编译的 linux 源码
 KERNEL ?= linux-2.6.34
 
 ifeq ("$(RARCH)", "x86_64")
-	ARCH = x86
+	LARCH = x86
+else ifeq ("$(RARCH)", "aarch64")
+	KERNEL = linux-4.9.229
+	LARCH = arm64
+else
+	$(error "unkown arch!!!");
 endif
+$(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] THREADS[${THREADS}] MEM[${MEM}]);
 
 .PHONY += build-image run-image clean-image
 .PHONY += defconfig image devel run restartgdb rungdb stopgdb
@@ -26,7 +38,7 @@ image-in-docker :
 	cd src/${KERNEL} && make bzImage -j$(THREADS)
 
 gdb-in-docker :
-	qemu-system-x86_64 -kernel src/${KERNEL}/arch/${ARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
+	qemu-system-x86_64 -kernel src/${KERNEL}/arch/${LARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
 
 fs-defconfig-in-docker :
 	cd src/busybox-1.15.3 && make defconfig

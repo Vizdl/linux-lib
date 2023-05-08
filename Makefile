@@ -1,5 +1,5 @@
 # 编译的线程数
-THREADS ?= 4
+THREADS ?= 32
 # 编译时内存限制
 MEM ?= 4G
 
@@ -9,11 +9,16 @@ RARCH ?= $(shell uname -m)
 LARCH ?= x86
 # 待编译的 linux 源码
 KERNEL ?= linux-2.6.34
+BUSYBOX ?= busybox-1.15.3
+CONSOLE ?= ttyS0
+
 
 ifeq ("$(RARCH)", "x86_64")
 	LARCH = x86
 else ifeq ("$(RARCH)", "aarch64")
 	KERNEL = linux-4.9.229
+	BUSYBOX = busybox-1.30.0
+	CONSOLE = ttyAMA0
 	LARCH = arm64
 else
 	$(error "unkown arch!!!");
@@ -35,22 +40,30 @@ distclean-in-docker :
 	cd src/${KERNEL} && make distclean
 
 image-in-docker :
-	cd src/${KERNEL} && make bzImage -j$(THREADS)
+	cd src/${KERNEL} && make Image -j$(THREADS)
 
 gdb-in-docker :
 	qemu-system-x86_64 -kernel src/${KERNEL}/arch/${LARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
 
 fs-defconfig-in-docker :
-	cd src/busybox-1.15.3 && make defconfig
+	cd src/${BUSYBOX} && make defconfig
 
 fs-menuconfig-in-docker :
-	cd src/busybox-1.15.3 && make menuconfig
+	cd src/${BUSYBOX} && make menuconfig
 
 rootfs-in-docker :
-	cd src/busybox-1.15.3 && make -j$(THREADS) && make install && bash rootfs.sh
+	cd src/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs.sh
 
 fs-distclean-in-docker :
-	cd src/busybox-1.15.3 && make distclean
+	cd src/${BUSYBOX} && make distclean
+
+run-in-docker :
+	qemu-system-${RARCH}  \
+		-nographic -nodefaults \
+		-smp 4 -m 2G \
+		-kernel ./src/${KERNEL}/arch/${LARCH}/boot/Image \
+		-initrd src/${BUSYBOX}/rootfs.img.gz \
+		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
 
 # 在镜像外的操作
 build-image :
@@ -66,12 +79,12 @@ clean-image :
 	sudo docker rmi linux-lib-${RARCH}:latest
 
 run :
-	sudo qemu-system-x86_64  \
-		-nographic \
-		-smp 4 -m 2G \
-		-kernel ./src/${KERNEL}/arch/x86/boot/bzImage \
-		-initrd src/busybox-1.15.3/rootfs.img.gz \
-		-append "root=/dev/ram console=ttyS0 init=/linuxrc"
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} run-in-docker; \
+	sudo docker rm buildlinux
 
 menuconfig :
 	sudo docker run \

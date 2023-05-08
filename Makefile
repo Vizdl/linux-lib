@@ -9,8 +9,12 @@ RARCH ?= $(shell uname -m)
 LARCH ?= x86
 # 待编译的 linux 源码
 KERNEL ?= linux-2.6.34
+# 待编译的 busybox 源码
 BUSYBOX ?= busybox-1.15.3
+# 运行时选择的 console
 CONSOLE ?= ttyS0
+# 镜像名
+IMAGE ?= bzImage
 
 
 ifeq ("$(RARCH)", "x86_64")
@@ -20,11 +24,14 @@ else ifeq ("$(RARCH)", "aarch64")
 	BUSYBOX = busybox-1.30.0
 	CONSOLE = ttyAMA0
 	LARCH = arm64
+	IMAGE = Image
 else
 	$(error "unkown arch!!!");
 endif
-$(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] THREADS[${THREADS}] MEM[${MEM}]);
 
+$(info THREADS[${THREADS}] MEM[${MEM}]);
+$(info IMAGE[${IMAGE}] CONSOLE[${CONSOLE}]);
+$(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
 .PHONY += build-image run-image clean-image
 .PHONY += defconfig image devel run restartgdb rungdb stopgdb
 .PHONY += defconfig-in-docker distclean-in-docker image-in-docker gdb-in-docker
@@ -40,7 +47,7 @@ distclean-in-docker :
 	cd src/${KERNEL} && make distclean
 
 image-in-docker :
-	cd src/${KERNEL} && make Image -j$(THREADS)
+	cd src/${KERNEL} && make ${IMAGE} -j$(THREADS)
 
 gdb-in-docker :
 	qemu-system-x86_64 -kernel src/${KERNEL}/arch/${LARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
@@ -59,9 +66,9 @@ fs-distclean-in-docker :
 
 run-in-docker :
 	qemu-system-${RARCH}  \
-		-nographic -nodefaults \
+		-nographic \
 		-smp 4 -m 2G \
-		-kernel ./src/${KERNEL}/arch/${LARCH}/boot/Image \
+		-kernel ./src/${KERNEL}/arch/${LARCH}/boot/${IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
 		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
 

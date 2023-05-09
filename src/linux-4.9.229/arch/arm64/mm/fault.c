@@ -190,6 +190,7 @@ static bool is_el1_instruction_abort(unsigned int esr)
 
 /*
  * The kernel tried to access some page that wasn't present.
+ * 内核态尝试去访问一些没有父页表的页
  */
 static void __do_kernel_fault(unsigned long addr, unsigned int esr,
 			      struct pt_regs *regs)
@@ -198,6 +199,8 @@ static void __do_kernel_fault(unsigned long addr, unsigned int esr,
 	 * Are we prepared to handle this kernel fault?
 	 * We are almost certainly not prepared to handle instruction faults.
 	 */
+	// printk("\n\n\n__do_kernel_fault\n\n\n");
+	// printk(KERN_INFO "%s : task[%s] access addr[%lx] write[%d]", __func__, current->comm, addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
 	if (!is_el1_instruction_abort(esr) && fixup_exception(regs))
 		return;
 

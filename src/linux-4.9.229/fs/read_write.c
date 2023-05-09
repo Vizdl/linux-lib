@@ -551,9 +551,14 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 		return -EBADF;
 	if (!(file->f_mode & FMODE_CAN_WRITE))
 		return -EINVAL;
+	/**
+	 * 简单地检查是否可访问
+	 */
 	if (unlikely(!access_ok(VERIFY_READ, buf, count)))
 		return -EFAULT;
-
+	/**
+	 * 检查文件读写权限
+	 */
 	ret = rw_verify_area(WRITE, file, pos, count);
 	if (!ret) {
 		if (count > MAX_RW_COUNT)

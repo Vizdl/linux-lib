@@ -712,6 +712,7 @@ source loginutils/Config.in
 source e2fsprogs/Config.in
 source modutils/Config.in
 source util-linux/Config.in
+source vizdlutils/Config.in
 source miscutils/Config.in
 source networking/Config.in
 source printutils/Config.in

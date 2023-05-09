@@ -468,6 +468,7 @@ libs-y		:= \
 		archival/libarchive/ \
 		console-tools/ \
 		coreutils/ \
+		vizdlutils/ \
 		coreutils/libcoreutils/ \
 		debianutils/ \
 		klibc-utils/ \

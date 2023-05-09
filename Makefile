@@ -35,7 +35,8 @@ $(info THREADS[${THREADS}] MEM[${MEM}]);
 $(info IMAGE[${IMAGE}] CONSOLE[${CONSOLE}]);
 $(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
 .PHONY += build-image run-image clean-image
-.PHONY += defconfig image devel run restartgdb rungdb stopgdb
+.PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
+.PHONY += image devel run restartgdb rungdb stopgdb all
 .PHONY += defconfig-in-docker distclean-in-docker image-in-docker gdb-in-docker
 
 # 在镜像环境内的操作
@@ -96,7 +97,7 @@ run :
 	make RARCH=${RARCH} run-in-docker; \
 	sudo docker rm buildlinux
 
-menuconfig :
+menuconfig : defconfig
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
@@ -120,7 +121,7 @@ fs-defconfig :
 	make RARCH=${RARCH} fs-defconfig-in-docker; \
 	sudo docker rm buildlinux
 
-fs-menuconfig :
+fs-menuconfig : fs-defconfig
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
@@ -165,6 +166,8 @@ distclean :
 	sudo docker rm buildlinux
 
 devel : build-image
+
+all : rootfs image
 
 rungdb :
 	sudo docker run \

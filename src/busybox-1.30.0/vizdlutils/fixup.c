@@ -1,6 +1,6 @@
 /* vi: set sw=4 ts=4: */
 /*
- * fixup implementation for Vizdl
+ * fixup implementation for vizdl
  *
  * Copyright (C) 2023  Lei Ding <dinglei@kernelsoft.com>
  *
@@ -33,6 +33,8 @@ int fixup_main(int argc UNUSED_PARAM, char **argv)
 {
 	char* buff = (char *)0x40000000;
     int fd = 0;
+    printf("fixup begin\n");
     fd = open(buff, O_WRONLY);
+    printf("fixup end, ret = %d\n", fd);
     return 0;
 }

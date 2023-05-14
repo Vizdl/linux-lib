@@ -227,7 +227,7 @@ static void __do_user_fault(struct task_struct *tsk, unsigned long addr,
 {
 	struct siginfo si;
 	const struct fault_info *inf;
-
+	printk("%s : task[%s] accse addr[%lx] write[%d]\n", __func__, tsk->comm, addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
 	if (unhandled_signal(tsk, sig) && show_unhandled_signals_ratelimited()) {
 		inf = esr_to_fault_info(esr);
 		pr_info("%s[%d]: unhandled %s (%d) at 0x%08lx, esr 0x%03x\n",
@@ -270,7 +270,9 @@ static int __do_page_fault(struct mm_struct *mm, unsigned long addr,
 {
 	struct vm_area_struct *vma;
 	int fault;
-
+	/**
+	 * 找到 vma
+	 */
 	vma = find_vma(mm, addr);
 	fault = VM_FAULT_BADMAP;
 	if (unlikely(!vma))
@@ -336,7 +338,9 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 	 */
 	if (faulthandler_disabled() || !mm)
 		goto no_context;
-
+	/**
+	 * 用户态访存出错
+	 */
 	if (user_mode(regs))
 		mm_flags |= FAULT_FLAG_USER;
 
@@ -365,6 +369,9 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 	 * we can bug out early if this is from code which shouldn't.
 	 */
 	if (!down_read_trylock(&mm->mmap_sem)) {
+		/**
+		 * 在内核态出现访存错误
+		 */
 		if (!user_mode(regs) && !search_exception_tables(regs->pc))
 			goto no_context;
 retry:

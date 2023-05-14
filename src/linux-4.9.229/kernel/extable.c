@@ -38,6 +38,30 @@ extern struct exception_table_entry __stop___ex_table[];
 /* Cleared by build time tools if the table is already sorted. */
 u32 __initdata __visible main_extable_sort_needed = 1;
 
+void show_extable(const struct exception_table_entry *base, const size_t num)
+{
+	int i;
+    printk("%s : start print, num[%ld]\n", __func__, num);
+	for (i = 0; i < num; i++) {
+		if (base[i].fixup == 0) {
+			/* A range entry, skip both parts. */
+			i++;
+			continue;
+		}
+		if (base[i].fixup == -1)
+			continue;
+        /**
+         * 64位采用32位存储采用了相对偏移的方式 : (unsigned long)&base[i].insn + base[i].insn
+         */
+        printk("%s : insn base[%lx] fixup base[%lx] insn[%lx], fixup[%lx]\n", __func__, (unsigned long)&base[i].insn, (unsigned long)&base[i].fixup, 
+        (unsigned long)&base[i].insn + base[i].insn, (unsigned long)&base[i].fixup + base[i].fixup);
+	}
+}
+
+void __init show_ex_table (void) {
+    show_extable(__start___ex_table, __stop___ex_table - __start___ex_table);
+}
+
 /* Sort the kernel's built-in exception table */
 void __init sort_main_extable(void)
 {

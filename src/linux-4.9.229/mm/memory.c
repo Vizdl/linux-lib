@@ -3600,6 +3600,9 @@ static int __handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
 	pud_t *pud;
 
 	pgd = pgd_offset(mm, address);
+	/**
+	 * 创建页表
+	 */
 	pud = pud_alloc(mm, pgd, address);
 	if (!pud)
 		return VM_FAULT_OOM;

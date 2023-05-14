@@ -941,6 +941,8 @@ static inline void mark_readonly(void)
 }
 #endif
 
+void __init show_ex_table (void);
+
 static int __ref kernel_init(void *unused)
 {
 	int ret;
@@ -981,7 +983,7 @@ static int __ref kernel_init(void *unused)
 	    !try_to_run_init_process("/bin/init") ||
 	    !try_to_run_init_process("/bin/sh"))
 		return 0;
-
+	show_ex_table();
 	panic("No working init found.  Try passing init= option to kernel. "
 	      "See Linux Documentation/init.txt for guidance.");
 }

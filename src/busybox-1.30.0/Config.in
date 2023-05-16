@@ -363,7 +363,7 @@ comment 'Build Options'
 
 config STATIC
 	bool "Build static binary (no shared libs)"
-	default n
+	default y
 	help
 	If you want to build a static binary, which does not use
 	or require any shared libraries, enable this option.

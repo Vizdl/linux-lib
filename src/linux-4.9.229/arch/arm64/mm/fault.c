@@ -280,6 +280,8 @@ static int __do_page_fault(struct mm_struct *mm, unsigned long addr,
 	if (unlikely(vma->vm_start > addr))
 		goto check_stack;
 
+	printk("%s : task[%s] accse addr[%lx] write[%ld]\n", __func__, tsk->comm, addr, vm_flags & VM_WRITE);
+
 	/*
 	 * Ok, we have a good vm_area for this memory access, so we can handle
 	 * it.
@@ -331,7 +333,7 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 
 	tsk = current;
 	mm  = tsk->mm;
-
+	// printk(KERN_INFO "%s : task[%s] access addr[%lx] write[%d]\n", __func__, current->comm, addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
 	/*
 	 * If we're in an interrupt or have no user context, we must not take
 	 * the fault.
@@ -370,7 +372,7 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 	 */
 	if (!down_read_trylock(&mm->mmap_sem)) {
 		/**
-		 * 在内核态出现访存错误
+		 * 在内核态出现访存错误并且存在处理函数
 		 */
 		if (!user_mode(regs) && !search_exception_tables(regs->pc))
 			goto no_context;
@@ -387,7 +389,9 @@ retry:
 			goto no_context;
 #endif
 	}
-
+	/**
+	 * 先优先修复
+	 */
 	fault = __do_page_fault(mm, addr, mm_flags, vm_flags, tsk);
 
 	/*

@@ -26,13 +26,18 @@
 //usage:     "\n	-T	Open/close tray (toggle)"
 
 #include "libbb.h"     /* 包含busybox公共头文件 */
+
 int fixup_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
-
-
+char *data = "/dev/null";
+char path[256] = "/dev/null";
 int fixup_main(int argc UNUSED_PARAM, char **argv)
 {
 	char* buff = (char *)0x40000000;
     int fd = 0;
+    printf("anon vma page fault begin\n");
+    fd = open(path, O_WRONLY);
+    printf("anon vma page fault end, path[%lx], ret = %d\n", path, fd);
+
     printf("fixup begin\n");
     fd = open(buff, O_WRONLY);
     printf("fixup end, ret = %d\n", fd);

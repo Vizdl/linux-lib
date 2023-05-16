@@ -1,8 +1,7 @@
 # 编译的线程数
-THREADS ?= 32
+THREADS ?= 64
 # 编译时内存限制
-MEM ?= 4G
-
+MEM ?= 64G
 # 真实 arch
 RARCH ?= $(shell uname -m)
 # 对应 linux 路径名
@@ -41,7 +40,10 @@ $(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
 
 # 在镜像环境内的操作
 defconfig-in-docker :
-	cd src/${KERNEL} && make defconfig
+	cd src/${KERNEL} && make defconfig && \
+	scripts/config --enable BLK_DEV_RAM && \
+	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
+	scripts/config --set-val BLK_DEV_RAM_SIZE 65536
 
 menuconfig-in-docker :
 	cd src/${KERNEL} && make menuconfig

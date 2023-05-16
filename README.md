@@ -30,16 +30,7 @@ sudo make build-image
 ```bash
 make defconfig
 ```
-#### 3.2 修改 linux 配置将 RAM dist size 设置为 65536
-```bash
-make menuconfig
-```
-可以看见一个 ui 画面,根据下面去找到 `Default RAM disk size` 并回车填入 65536
-```bash
-Device Drivers  --->
-    [*] Block devices  --->
-        (65536) Default RAM disk size (kbytes)
-```
+编译 linux 默认配置时,该项目通过 `scripts/config` 修改了默认配置, 将 RAM dist size 设置为 65536。
 #### 3.3 编译生成 linux 镜像
 ```bash
 make image
@@ -49,16 +40,7 @@ make image
 ```bash
 make fs-defconfig
 ```
-#### 4.2 修改 busybox 配置将 busybox 二进制文件设置为静态编译
-```bash
-make fs-menuconfig
-```
-可以看见一个 ui 画面,根据下面去找到 `Build BusyBox as a static binary` 并按 `y`
-```bash
-Busybox Settings  --->
-    Build Options  --->
-        [*] Build BusyBox as a static binary (no shared libs)
-```
+该项目生成的 busybox 默认配置就将 busybox 二进制文件设置为静态编译。
 #### 4.3 编译生成 rootfs 文件
 ```bash
 make rootfs

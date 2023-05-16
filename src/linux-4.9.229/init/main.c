@@ -478,6 +478,8 @@ static void __init mm_init(void)
 	kaiser_init();
 }
 
+extern void show_ex_table (void);
+
 asmlinkage __visible void __init start_kernel(void)
 {
 	char *command_line;
@@ -659,6 +661,7 @@ asmlinkage __visible void __init start_kernel(void)
 	}
 
 	ftrace_init();
+	// show_ex_table();
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();
@@ -941,7 +944,6 @@ static inline void mark_readonly(void)
 }
 #endif
 
-void __init show_ex_table (void);
 
 static int __ref kernel_init(void *unused)
 {
@@ -983,7 +985,6 @@ static int __ref kernel_init(void *unused)
 	    !try_to_run_init_process("/bin/init") ||
 	    !try_to_run_init_process("/bin/sh"))
 		return 0;
-	show_ex_table();
 	panic("No working init found.  Try passing init= option to kernel. "
 	      "See Linux Documentation/init.txt for guidance.");
 }

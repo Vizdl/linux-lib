@@ -26,20 +26,34 @@
 //usage:     "\n	-T	Open/close tray (toggle)"
 
 #include "libbb.h"     /* 包含busybox公共头文件 */
+#include <sched.h>
 
 int fixup_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 char *data = "/dev/null";
 char path[256] = "/dev/null";
-int fixup_main(int argc UNUSED_PARAM, char **argv)
+
+
+void test_copy_from_user(void)
+{
+    int ret;
+    struct sched_param* param = (struct sched_param*)0x5000000;
+    printf("test_copy_from_user begin, argc point[%lx]\n", param);
+    ret = sched_setscheduler(getpid(), SCHED_FIFO, param);
+    printf("test_copy_from_user end, ret %d.\n", ret);
+}
+
+void test_get_name(void)
 {
 	char* buff = (char *)0x40000000;
     int fd = 0;
-    printf("anon vma page fault begin\n");
-    fd = open(path, O_WRONLY);
-    printf("anon vma page fault end, path[%lx], ret = %d\n", path, fd);
-
     printf("fixup begin\n");
     fd = open(buff, O_WRONLY);
     printf("fixup end, ret = %d\n", fd);
+}
+
+int fixup_main(int argc UNUSED_PARAM, char **argv)
+{
+    test_copy_from_user();
+    test_get_name();
     return 0;
 }

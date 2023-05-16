@@ -105,6 +105,9 @@ search_extable(const struct exception_table_entry *first,
 	       const struct exception_table_entry *last,
 	       unsigned long value)
 {
+	/**
+	 * 根据二分法来找对应处理的条目
+	 */
 	while (first <= last) {
 		const struct exception_table_entry *mid;
 

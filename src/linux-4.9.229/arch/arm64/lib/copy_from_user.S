@@ -77,6 +77,9 @@ ALTERNATIVE("nop", __stringify(SET_PSTATE_PAN(1)), ARM64_ALT_PAN_NOT_UAO, \
 	ret
 ENDPROC(__arch_copy_from_user)
 
+	/**
+	* 错误处理程序
+	*/
 	.section .fixup,"ax"
 	.align	2
 9998:	sub	x0, end, dst			// bytes not copied

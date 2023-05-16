@@ -35,15 +35,16 @@ $(info IMAGE[${IMAGE}] CONSOLE[${CONSOLE}]);
 $(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
 .PHONY += build-image run-image clean-image
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
-.PHONY += image devel run restartgdb rungdb stopgdb all
-.PHONY += defconfig-in-docker distclean-in-docker image-in-docker gdb-in-docker
+.PHONY += image devel run dump restartgdb rungdb stopgdb all
+.PHONY += defconfig-in-docker distclean-in-docker image-in-docker gdb-in-docker dump-in-docker
 
 # 在镜像环境内的操作
 defconfig-in-docker :
 	cd src/${KERNEL} && make defconfig && \
 	scripts/config --enable BLK_DEV_RAM && \
 	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
-	scripts/config --set-val BLK_DEV_RAM_SIZE 65536
+	scripts/config --set-val BLK_DEV_RAM_SIZE 65536 && \
+	scripts/config --disable ARM64_UAO
 
 menuconfig-in-docker :
 	cd src/${KERNEL} && make menuconfig
@@ -68,6 +69,9 @@ rootfs-in-docker :
 
 fs-distclean-in-docker :
 	cd src/${BUSYBOX} && make distclean
+
+dump-in-docker :
+	objdump -s -d src/${KERNEL}/vmlinux > dump.s
 
 run-in-docker :
 	qemu-system-${RARCH}  \
@@ -168,6 +172,14 @@ distclean :
 	sudo docker rm buildlinux
 
 devel : build-image
+
+dump :
+	sudo docker run \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	-it linux-lib-${RARCH}:latest \
+	make RARCH=${RARCH} dump-in-docker; \
+	sudo docker rm buildlinux
 
 all : rootfs image
 

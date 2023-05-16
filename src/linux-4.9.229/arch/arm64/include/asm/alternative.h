@@ -266,6 +266,9 @@ alternative_endif
 		_asm_extable	8888b,\l;
 	.endm
 #else
+	/**
+	 * 如若没有 UAO 机制,则使用 fixup 机制替代
+	 */
 	.macro uao_ldp l, reg1, reg2, addr, post_inc
 		USER(\l, ldp \reg1, \reg2, [\addr], \post_inc)
 	.endm

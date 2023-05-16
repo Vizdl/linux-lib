@@ -261,6 +261,15 @@ extern asmlinkage void dump_stack(void) __cold;
 #define pr_fmt(fmt) fmt
 #endif
 
+#define dl_dbg(fmt, ...) \
+	do {					\
+		if ( 				\
+			(!strcmp(current->comm, "fixup")) \
+		)		\
+			printk("%s : task[%s] , "fmt"\n", __func__, current->comm, ##__VA_ARGS__);	\
+	} while(0)
+
+
 /*
  * These can be used to print at the various log levels.
  * All of these will print unconditionally, although note that pr_debug()

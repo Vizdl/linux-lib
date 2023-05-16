@@ -1673,6 +1673,24 @@ static int exec_binprm(struct linux_binprm *bprm)
 	return ret;
 }
 
+/**
+ * 用来显示 fixup 进程内存分布的。
+ */
+static int show_mm(struct mm_struct* mm)
+{
+	dl_dbg("start_code=%08lX  ", mm->start_code );
+	dl_dbg("end_code=%08lX\n", mm->end_code );
+	dl_dbg("start_data=%08lX  ", mm->start_data );
+	dl_dbg("end_data=%08lX\n", mm->end_data );
+	dl_dbg("start_brk=%08lX  ", mm->start_brk );
+	dl_dbg("brk=%08lX\n", mm->brk );
+	dl_dbg("arg_start=%08lX  ", mm->arg_start );
+	dl_dbg("arg_end=%08lX\n", mm->arg_end );
+	dl_dbg("env_start=%08lX  ", mm->env_start );
+	dl_dbg("env_end=%08lX\n", mm->env_end );
+	dl_dbg("start_stack=%08lX  ", mm->start_stack );
+}
+
 /*
  * sys_execve() executes a new program.
  */
@@ -1794,6 +1812,7 @@ static int do_execveat_common(int fd, struct filename *filename,
 	free_bprm(bprm);
 	kfree(pathbuf);
 	putname(filename);
+	show_mm(current->mm);
 	if (displaced)
 		put_files_struct(displaced);
 	return retval;

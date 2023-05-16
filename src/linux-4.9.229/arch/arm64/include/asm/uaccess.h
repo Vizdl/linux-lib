@@ -328,16 +328,19 @@ static inline unsigned long __must_check __copy_to_user(void __user *to, const v
 	check_object_size(from, n, true);
 	return __arch_copy_to_user(__uaccess_mask_ptr(to), from, n);
 }
-
+#include <linux/sched.h>
 static inline unsigned long __must_check copy_from_user(void *to, const void __user *from, unsigned long n)
 {
 	unsigned long res = n;
 	kasan_check_write(to, n);
 
 	if (access_ok(VERIFY_READ, from, n)) {
+		dl_dbg("access_ok, start __arch_copy_from_user");
 		check_object_size(to, n, false);
 		res = __arch_copy_from_user(to, from, n);
+		dl_dbg("__arch_copy_from_user end, ret %ld", res);
 	}
+	dl_dbg("copy end");
 	if (unlikely(res))
 		memset(to + (n - res), 0, res);
 	return res;

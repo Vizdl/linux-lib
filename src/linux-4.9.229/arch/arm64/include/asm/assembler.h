@@ -115,7 +115,7 @@
 	.endm
 
 /*
- * Emit an entry into the exception table
+ * 提供给汇编向 __ex_table 添加一个元素
  */
 	.macro		_asm_extable, from, to
 	.pushsection	__ex_table, "a"

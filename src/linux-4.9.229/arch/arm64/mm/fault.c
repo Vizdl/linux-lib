@@ -199,7 +199,7 @@ static void __do_kernel_fault(unsigned long addr, unsigned int esr,
 	 * Are we prepared to handle this kernel fault?
 	 * We are almost certainly not prepared to handle instruction faults.
 	 */
-	printk(KERN_INFO "%s : task[%s] access addr[%lx] write[%d]\n", __func__, current->comm, addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
+	dl_dbg("access addr[%lx] write[%d]", addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
 	if (!is_el1_instruction_abort(esr) && fixup_exception(regs))
 		return;
 
@@ -227,7 +227,7 @@ static void __do_user_fault(struct task_struct *tsk, unsigned long addr,
 {
 	struct siginfo si;
 	const struct fault_info *inf;
-	printk("%s : task[%s] accse addr[%lx] write[%d]\n", __func__, tsk->comm, addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
+	dl_dbg("access addr[%lx] write[%d]", addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
 	if (unhandled_signal(tsk, sig) && show_unhandled_signals_ratelimited()) {
 		inf = esr_to_fault_info(esr);
 		pr_info("%s[%d]: unhandled %s (%d) at 0x%08lx, esr 0x%03x\n",
@@ -280,7 +280,7 @@ static int __do_page_fault(struct mm_struct *mm, unsigned long addr,
 	if (unlikely(vma->vm_start > addr))
 		goto check_stack;
 
-	printk("%s : task[%s] accse addr[%lx] write[%ld]\n", __func__, tsk->comm, addr, vm_flags & VM_WRITE);
+	dl_dbg("access addr[%lx] write[%ld]", addr, (vm_flags & VM_WRITE));
 
 	/*
 	 * Ok, we have a good vm_area for this memory access, so we can handle
@@ -333,7 +333,7 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 
 	tsk = current;
 	mm  = tsk->mm;
-	// printk(KERN_INFO "%s : task[%s] access addr[%lx] write[%d]\n", __func__, current->comm, addr, ((esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM)));
+	dl_dbg("access addr[%lx] write[%ld]", addr, (vm_flags & VM_WRITE));
 	/*
 	 * If we're in an interrupt or have no user context, we must not take
 	 * the fault.

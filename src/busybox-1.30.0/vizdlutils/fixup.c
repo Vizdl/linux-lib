@@ -36,9 +36,9 @@ char path[256] = "/dev/null";
 void test_copy_from_user(void)
 {
     int ret;
-    struct sched_param* param = (struct sched_param*)0x5000000;
-    printf("test_copy_from_user begin, argc point[%lx]\n", param);
-    ret = sched_setscheduler(getpid(), SCHED_FIFO, param);
+	struct timespec* errorptr = (struct timespec*) 0x5000000; 
+    printf("test_copy_from_user begin, argc point[%lx]\n", errorptr);
+    ret = nanosleep(errorptr, NULL);
     printf("test_copy_from_user end, ret %d.\n", ret);
 }
 

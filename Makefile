@@ -181,7 +181,7 @@ dump :
 	make RARCH=${RARCH} dump-in-docker; \
 	sudo docker rm buildlinux
 
-all : rootfs image
+all : defconfig fs-defconfig rootfs image run
 
 rungdb :
 	sudo docker run \

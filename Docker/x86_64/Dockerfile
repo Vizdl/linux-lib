@@ -15,4 +15,5 @@ RUN apt-get install global -y
 RUN	apt-get install build-essential -y
 RUN	apt-get install kernel-package -y
 RUN	apt-get install libncurses5-dev -y
+RUN	apt-get install bc -y
 RUN	ln -sf /usr/bin/gcc-4.8 /usr/bin/gcc

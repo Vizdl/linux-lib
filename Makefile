@@ -1,5 +1,5 @@
 # 编译的线程数
-THREADS ?= 64
+THREADS ?= 128
 # 编译时内存限制
 MEM ?= 64G
 # 真实 arch
@@ -19,15 +19,20 @@ MACHINE=
 
 ifeq ("$(RARCH)", "x86_64")
 	LARCH = x86
+	# KERNEL = linux-4.9.229
 else ifeq ("$(RARCH)", "aarch64")
 	KERNEL = linux-4.9.229
-	BUSYBOX = busybox-1.30.0
 	CONSOLE = ttyAMA0
 	LARCH = arm64
 	IMAGE = Image
 	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
 else
 	$(error "unkown arch!!!");
+endif
+
+
+ifeq ("$(KERNEL)", "linux-2.6.34")
+	BUSYBOX = busybox-1.30.0
 endif
 
 $(info THREADS[${THREADS}] MEM[${MEM}]);
@@ -38,13 +43,30 @@ $(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
 .PHONY += image devel run dump restartgdb rungdb stopgdb all
 .PHONY += defconfig-in-docker distclean-in-docker image-in-docker gdb-in-docker dump-in-docker
 
-# 在镜像环境内的操作
-defconfig-in-docker :
-	cd src/${KERNEL} && make defconfig && \
+defconfig-after-in-docker-x86_64 :
+	cd src/${KERNEL} && \
+	scripts/config --enable BLK_DEV_RAM && \
+	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
+	scripts/config --set-val BLK_DEV_RAM_SIZE 65536
+
+
+defconfig-after-in-docker-aarch64 :
+	cd src/${KERNEL} && \
 	scripts/config --enable BLK_DEV_RAM && \
 	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
 	scripts/config --set-val BLK_DEV_RAM_SIZE 65536 && \
 	scripts/config --disable ARM64_UAO
+
+fs-defconfig-after-in-docker-x86_64 :
+	cd src/${BUSYBOX} && scripts/config --enable STATIC
+
+fs-defconfig-after-in-docker-aarch64 :
+	cd src/${BUSYBOX} && scripts/config --enable STATIC
+
+# 在镜像环境内的操作
+defconfig-in-docker :
+	cd src/${KERNEL} && make defconfig && \
+	cd - && make defconfig-after-in-docker-${RARCH}
 
 menuconfig-in-docker :
 	cd src/${KERNEL} && make menuconfig
@@ -59,7 +81,8 @@ gdb-in-docker :
 	qemu-system-x86_64 -kernel src/${KERNEL}/arch/${LARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
 
 fs-defconfig-in-docker :
-	cd src/${BUSYBOX} && make defconfig
+	cd src/${BUSYBOX} && make defconfig && \
+	cd - && make fs-defconfig-after-in-docker-${RARCH}
 
 fs-menuconfig-in-docker :
 	cd src/${BUSYBOX} && make menuconfig
@@ -182,6 +205,8 @@ dump :
 	sudo docker rm buildlinux
 
 all : defconfig fs-defconfig rootfs image run
+
+cleanall :	distclean fs-distclean
 
 rungdb :
 	sudo docker run \

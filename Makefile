@@ -5,26 +5,28 @@ MEM ?= 64G
 # 真实 arch
 RARCH ?= $(shell uname -m)
 # 对应 linux 路径名
-LARCH ?= x86
+LARCH ?=
 # 待编译的 linux 源码
-KERNEL ?= linux-2.6.34
+KERNEL ?= linux-4.9.229
 # 待编译的 busybox 源码
-BUSYBOX ?= busybox-1.15.3
+BUSYBOX ?= busybox-1.30.0
 # 运行时选择的 console
-CONSOLE ?= ttyS0
+CONSOLE ?= ttyAMA0
 # 镜像名
-IMAGE ?= bzImage
+IMAGE ?= Image
 # 机器
-MACHINE=
+MACHINE ?=
 
 ifeq ("$(RARCH)", "x86_64")
 	LARCH = x86
-	# KERNEL = linux-4.9.229
+
+	CONSOLE = ttyS0
+	KERNEL = linux-2.6.34
 else ifeq ("$(RARCH)", "aarch64")
-	KERNEL = linux-4.9.229
-	CONSOLE = ttyAMA0
 	LARCH = arm64
-	IMAGE = Image
+
+	CONSOLE = ttyAMA0
+	KERNEL = linux-4.9.229
 	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
 else
 	$(error "unkown arch!!!");
@@ -32,12 +34,14 @@ endif
 
 
 ifeq ("$(KERNEL)", "linux-2.6.34")
-	BUSYBOX = busybox-1.30.0
+	BUSYBOX = busybox-1.15.3
+	IMAGE = bzImage
 endif
 
 $(info THREADS[${THREADS}] MEM[${MEM}]);
 $(info IMAGE[${IMAGE}] CONSOLE[${CONSOLE}]);
 $(info RARCH[${RARCH}] LARCH[${LARCH}] KERNEL[${KERNEL}] BUSYBOX[${BUSYBOX}]);
+
 .PHONY += build-image run-image clean-image
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
 .PHONY += image devel run dump restartgdb rungdb stopgdb all

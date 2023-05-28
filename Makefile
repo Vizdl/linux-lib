@@ -11,23 +11,24 @@ KERNEL ?= linux-4.9.229
 # 待编译的 busybox 源码
 BUSYBOX ?= busybox-1.30.0
 # 运行时选择的 console
-CONSOLE ?= ttyAMA0
+CONSOLE ?=
 # 镜像名
-IMAGE ?= Image
+IMAGE ?=
 # 机器
 MACHINE ?=
 
 ifeq ("$(RARCH)", "x86_64")
 	LARCH = x86
-
 	CONSOLE = ttyS0
-	KERNEL = linux-2.6.34
+	IMAGE = bzImage
 else ifeq ("$(RARCH)", "aarch64")
 	LARCH = arm64
-
 	CONSOLE = ttyAMA0
-	KERNEL = linux-4.9.229
+	IMAGE = Image
 	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
+	ifeq ("$(KERNEL)", "linux-2.6.34")
+		$(error "linux-2.6.34 does not support aarch64!!!");
+	endif
 else
 	$(error "unkown arch!!!");
 endif
@@ -35,7 +36,6 @@ endif
 
 ifeq ("$(KERNEL)", "linux-2.6.34")
 	BUSYBOX = busybox-1.15.3
-	IMAGE = bzImage
 endif
 
 $(info THREADS[${THREADS}] MEM[${MEM}]);

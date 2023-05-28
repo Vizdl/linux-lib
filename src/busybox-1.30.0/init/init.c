@@ -1105,10 +1105,10 @@ int init_main(int argc UNUSED_PARAM, char **argv)
 	die_func = sleep_much;
 
 	/* Figure out where the default console should be */
-	console_init();
+	console_init();	// 初始化 console
 	set_sane_term();
-	xchdir("/");
-	setsid();
+	xchdir("/");	// cd /
+	setsid();		// 设置进程的会话 ID
 
 	/* Make sure environs is set to something sane */
 	putenv((char *) "HOME=/");
@@ -1138,7 +1138,7 @@ int init_main(int argc UNUSED_PARAM, char **argv)
 		 * then parse_inittab() simply adds in some default
 		 * actions (i.e., INIT_SCRIPT and a pair
 		 * of "askfirst" shells) */
-		parse_inittab();
+		parse_inittab(); // 解析 /etc/inittab 配置文件
 	}
 
 #if ENABLE_SELINUX
@@ -1213,7 +1213,9 @@ int init_main(int argc UNUSED_PARAM, char **argv)
 	/* Next run anything to be run only once */
 	run_actions(ONCE);
 
-	/* Now run the looping stuff for the rest of forever.
+	/**
+	 * Now run the looping stuff for the rest of forever.
+	 * 现在永远运行循环的东西。
 	 */
 	while (1) {
 		int maybe_WNOHANG;

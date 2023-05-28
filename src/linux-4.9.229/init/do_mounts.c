@@ -389,7 +389,7 @@ void __init mount_block_root(char *name, int flags)
 #else
 	const char *b = name;
 #endif
-
+	dl_info("name[%s], flags[%x]", name, flags);
 	get_fs_names(fs_names);
 retry:
 	for (p = fs_names; *p; p += strlen(p)+1) {
@@ -511,6 +511,7 @@ void __init change_floppy(char *fmt, ...)
 
 void __init mount_root(void)
 {
+	printk("mount_root ...\n");
 #ifdef CONFIG_ROOT_NFS
 	if (ROOT_DEV == Root_NFS) {
 		if (mount_nfs_root())

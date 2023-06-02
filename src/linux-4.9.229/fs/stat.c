@@ -103,10 +103,15 @@ int vfs_fstatat(int dfd, const char __user *filename, struct kstat *stat,
 	if (flag & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 retry:
+	/**
+	 * 根据 dfd 或 filename 找到 path
+	 */
 	error = user_path_at(dfd, filename, lookup_flags, &path);
 	if (error)
 		goto out;
-
+	/**
+	 * 根据 path 找到 文件属性
+	 */
 	error = vfs_getattr(&path, stat);
 	path_put(&path);
 	if (retry_estale(error, lookup_flags)) {

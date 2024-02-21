@@ -971,6 +971,9 @@ struct file *create_write_pipe(int flags)
 		goto err;
 
 	err = -ENOMEM;
+	/**
+	 * 文件路径相关处理
+	 */
 	path.dentry = d_alloc(pipe_mnt->mnt_sb->s_root, &name);
 	if (!path.dentry)
 		goto err_inode;
@@ -979,6 +982,9 @@ struct file *create_write_pipe(int flags)
 	path.dentry->d_op = &pipefs_dentry_operations;
 	d_instantiate(path.dentry, inode);
 
+	/**
+	 * file 处理
+	 */
 	err = -ENFILE;
 	f = alloc_file(&path, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
@@ -1031,7 +1037,9 @@ int do_pipe_flags(int *fd, int flags)
 
 	if (flags & ~(O_CLOEXEC | O_NONBLOCK))
 		return -EINVAL;
-
+	/**
+	 * 创建读写 pipe,并关联;
+	 */
 	fw = create_write_pipe(flags);
 	if (IS_ERR(fw))
 		return PTR_ERR(fw);
@@ -1050,6 +1058,9 @@ int do_pipe_flags(int *fd, int flags)
 		goto err_fdr;
 	fdw = error;
 
+	/**
+	 * 安装 fd
+	 */
 	audit_fd_pair(fdr, fdw);
 	fd_install(fdr, fr);
 	fd_install(fdw, fw);
@@ -1076,9 +1087,12 @@ SYSCALL_DEFINE2(pipe2, int __user *, fildes, int, flags)
 {
 	int fd[2];
 	int error;
-
+	printk("dl-debug[%s] : coming in\n", __func__);
 	error = do_pipe_flags(fd, flags);
 	if (!error) {
+		/**
+		 * 将 fd 拷贝回用户态
+		 */
 		if (copy_to_user(fildes, fd, sizeof(fd))) {
 			sys_close(fd[0]);
 			sys_close(fd[1]);

@@ -336,6 +336,9 @@ static unsigned int hpet_poll(struct file *file, poll_table * wait)
 	if (!devp->hd_ireqfreq)
 		return 0;
 
+	/**
+	 * 将 poll_table 插入 hd_waitqueue 等待
+	 */
 	poll_wait(file, &devp->hd_waitqueue, wait);
 
 	spin_lock_irq(&hpet_lock);

@@ -742,6 +742,7 @@ static inline unsigned int do_pollfd(struct pollfd *pollfd, poll_table *pwait)
 				if (pwait)
 					pwait->key = pollfd->events |
 							POLLERR | POLLHUP;
+				// 实际上调用 f_op->poll 去执行
 				mask = file->f_op->poll(file, pwait);
 			}
 			/* Mask out unneeded events. */
@@ -770,7 +771,7 @@ static int do_poll(unsigned int nfds,  struct poll_list *list,
 
 	if (end_time && !timed_out)
 		slack = estimate_accuracy(end_time);
-
+	// 遍历链表, 查看是否有数据
 	for (;;) {
 		struct poll_list *walk;
 
@@ -865,10 +866,12 @@ int do_sys_poll(struct pollfd __user *ufds, unsigned int nfds,
 		}
 	}
 
+	// 执行 poll
 	poll_initwait(&table);
 	fdcount = do_poll(nfds, head, &table, end_time);
 	poll_freewait(&table);
 
+	// 遍历 head, 将 poll 结果拷贝给用户态
 	for (walk = head; walk; walk = walk->next) {
 		struct pollfd *fds = walk->entries;
 		int j;
@@ -917,13 +920,13 @@ SYSCALL_DEFINE3(poll, struct pollfd __user *, ufds, unsigned int, nfds,
 {
 	struct timespec end_time, *to = NULL;
 	int ret;
-
+	// 计算超时时间
 	if (timeout_msecs >= 0) {
 		to = &end_time;
 		poll_select_set_timeout(to, timeout_msecs / MSEC_PER_SEC,
 			NSEC_PER_MSEC * (timeout_msecs % MSEC_PER_SEC));
 	}
-
+	// 执行 poll
 	ret = do_sys_poll(ufds, nfds, to);
 
 	if (ret == -EINTR) {

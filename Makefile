@@ -154,7 +154,7 @@ run :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} run-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
 	sudo docker rm buildlinux
 
 menuconfig : defconfig
@@ -162,7 +162,7 @@ menuconfig : defconfig
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} menuconfig-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} menuconfig-in-docker; \
 	sudo docker rm buildlinux
 
 defconfig :
@@ -170,7 +170,7 @@ defconfig :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} defconfig-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} defconfig-in-docker; \
 	sudo docker rm buildlinux
 
 fs-defconfig :
@@ -178,7 +178,7 @@ fs-defconfig :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} fs-defconfig-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-defconfig-in-docker; \
 	sudo docker rm buildlinux
 
 fs-menuconfig : fs-defconfig
@@ -186,7 +186,7 @@ fs-menuconfig : fs-defconfig
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} fs-menuconfig-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-menuconfig-in-docker; \
 	sudo docker rm buildlinux
 
 # 这里必须要加 --privileged, 否则挂载文件时会提示无权限。
@@ -196,7 +196,7 @@ rootfs :
 	--privileged \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} rootfs-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} rootfs-in-docker; \
 	sudo docker rm buildlinux
 
 fs-distclean :
@@ -204,7 +204,7 @@ fs-distclean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} fs-distclean-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-distclean-in-docker; \
 	sudo docker rm buildlinux
 
 clean :
@@ -212,7 +212,7 @@ clean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} clean-in-docker ; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} clean-in-docker ; \
 	sudo docker rm buildlinux
 
 fs-clean :
@@ -220,7 +220,7 @@ fs-clean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} fs-clean-in-docker ; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-clean-in-docker ; \
 	sudo docker rm buildlinux
 
 image :
@@ -229,7 +229,7 @@ image :
 	--name buildlinux \
 	--memory-reservation ${MEM} \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} image-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} image-in-docker; \
 	sudo docker rm buildlinux;
 	
 
@@ -238,7 +238,7 @@ distclean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} distclean-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} distclean-in-docker; \
 	sudo docker rm buildlinux
 
 devel : build-image
@@ -248,7 +248,7 @@ dump :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH} dump-in-docker; \
+	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} dump-in-docker; \
 	sudo docker rm buildlinux
 
 all : defconfig fs-defconfig rootfs image run

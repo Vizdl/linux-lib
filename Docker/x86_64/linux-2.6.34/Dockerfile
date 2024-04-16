@@ -17,3 +17,7 @@ RUN	apt-get install kernel-package -y
 RUN	apt-get install libncurses5-dev -y
 RUN	apt-get install bc -y
 RUN	ln -sf /usr/bin/gcc-4.8 /usr/bin/gcc
+RUN	apt-get install expect -y
+RUN	apt-get install e2fsprogs -y
+RUN	apt-get install kpartx -y
+RUN	apt-get install gdisk -y

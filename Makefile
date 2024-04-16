@@ -12,8 +12,9 @@ TARGET_ARCH ?= ${HOST_ARCH}
 # 待编译的 linux 源码
 LINUX_VERSION ?= linux-4.9.229
 # docker 镜像名
-DOCKER_IMAGE = linux-lib-${HOST_ARCH}-${LINUX_VERSION}:latest
-
+DOCKER_IMAGE = linux-lib-${TARGET_ARCH}-${LINUX_VERSION}:latest
+# USB 主机控制器
+HCI = nec-usb-xhci
 
 # 对应 linux 体系结构名
 LINUX_ARCH ?=
@@ -30,6 +31,7 @@ else ifeq ("$(TARGET_ARCH)", "aarch64")
 	CONSOLE = ttyAMA0
 	IMAGE = Image
 	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
+	HCI = qemu-xhci
 	ifeq ("$(LINUX_VERSION)", "linux-2.6.34")
 		$(error "linux-2.6.34 does not support aarch64!!!");
 	endif
@@ -71,6 +73,8 @@ $(info HOST_ARCH[${HOST_ARCH}] LINUX_ARCH[${LINUX_ARCH}] LINUX_VERSION[${LINUX_V
 
 defconfig-after-in-docker-x86_64 :
 	cd src/${LINUX_VERSION} && \
+	scripts/config --enable USB_XHCI_HCD && \
+	scripts/config --enable XHCI_HCD_DEBUGGING && \
 	scripts/config --enable BLK_DEV_RAM && \
 	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
 	scripts/config --set-val BLK_DEV_RAM_SIZE 65536
@@ -83,17 +87,17 @@ defconfig-after-in-docker-aarch64 :
 	scripts/config --disable ARM64_UAO
 
 fs-defconfig-after-in-docker-x86_64 :
+	cd src/${BUSYBOX} && scripts/config --enable STATIC
+
+fs-defconfig-after-in-docker-aarch64 :
 	cd src/${BUSYBOX} && \
 	scripts/config --enable STATIC && \
 	scripts/config --set-str CROSS_COMPILER_PREFIX "${CROSS_COMPILER_PERFIX}"
 
-fs-defconfig-after-in-docker-aarch64 :
-	cd src/${BUSYBOX} && scripts/config --enable STATIC
-
 # 在镜像环境内的操作
 defconfig-in-docker :
 	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} defconfig && \
-	cd - && make defconfig-after-in-docker-${HOST_ARCH}
+	cd - && make defconfig-after-in-docker-${TARGET_ARCH}
 
 menuconfig-in-docker :
 	cd src/${LINUX_VERSION} && make menuconfig
@@ -112,7 +116,7 @@ gdb-in-docker :
 
 fs-defconfig-in-docker :
 	cd src/${BUSYBOX} && make defconfig && \
-	cd - && make fs-defconfig-after-in-docker-${HOST_ARCH}
+	cd - && make fs-defconfig-after-in-docker-${TARGET_ARCH}
 
 fs-menuconfig-in-docker :
 	cd src/${BUSYBOX} && make menuconfig
@@ -134,16 +138,23 @@ run-in-docker :
 		-nographic \
 		${MACHINE} \
 		-smp 4 -m 2G \
+		-device ${HCI} \
+		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
+		-usb -device usb-storage,drive=my_usb_disk \
 		-kernel ./src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
 		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
 
+usbdisk-in-docker:
+	bash scripts/create_usbdisk.sh
+
 # 在镜像外的操作
 build-image :
-	sudo docker build -t ${DOCKER_IMAGE} Docker/${HOST_ARCH}/${LINUX_VERSION} --build-arg BUILDKIT_INLINE_CACHE=1 
+	sudo docker build -t ${DOCKER_IMAGE} Docker/${TARGET_ARCH}/${LINUX_VERSION} --build-arg BUILDKIT_INLINE_CACHE=1 
 
 run-image :
 	sudo docker run \
+	--privileged \
 	--volume=${PWD}:/workdir:rw \
 	-it ${DOCKER_IMAGE} \
 	/bin/bash
@@ -156,7 +167,7 @@ run :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
 	sudo docker rm buildlinux
 
 menuconfig : defconfig
@@ -164,7 +175,7 @@ menuconfig : defconfig
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} menuconfig-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} menuconfig-in-docker; \
 	sudo docker rm buildlinux
 
 defconfig :
@@ -172,7 +183,7 @@ defconfig :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} defconfig-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} defconfig-in-docker; \
 	sudo docker rm buildlinux
 
 fs-defconfig :
@@ -180,7 +191,7 @@ fs-defconfig :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-defconfig-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-defconfig-in-docker; \
 	sudo docker rm buildlinux
 
 fs-menuconfig : fs-defconfig
@@ -188,7 +199,7 @@ fs-menuconfig : fs-defconfig
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-menuconfig-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-menuconfig-in-docker; \
 	sudo docker rm buildlinux
 
 # 这里必须要加 --privileged, 否则挂载文件时会提示无权限。
@@ -198,7 +209,7 @@ rootfs :
 	--privileged \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} rootfs-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} rootfs-in-docker; \
 	sudo docker rm buildlinux
 
 fs-distclean :
@@ -206,7 +217,7 @@ fs-distclean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-distclean-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-distclean-in-docker; \
 	sudo docker rm buildlinux
 
 clean :
@@ -214,7 +225,7 @@ clean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} clean-in-docker ; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} clean-in-docker ; \
 	sudo docker rm buildlinux
 
 fs-clean :
@@ -222,7 +233,7 @@ fs-clean :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-clean-in-docker ; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-clean-in-docker ; \
 	sudo docker rm buildlinux
 
 image :
@@ -231,16 +242,25 @@ image :
 	--name buildlinux \
 	--memory-reservation ${MEM} \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} image-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} image-in-docker; \
 	sudo docker rm buildlinux;
 	
+usbdisk:
+	sudo docker run \
+	--privileged \
+	--volume=${PWD}:/workdir:rw \
+	--name buildlinux \
+	--memory-reservation ${MEM} \
+	-it ${DOCKER_IMAGE} \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} usbdisk-in-docker; \
+	sudo docker rm buildlinux;
 
 distclean :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} distclean-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} distclean-in-docker; \
 	sudo docker rm buildlinux
 
 devel : build-image
@@ -250,7 +270,7 @@ dump :
 	--volume=${PWD}:/workdir:rw \
 	--name buildlinux \
 	-it ${DOCKER_IMAGE} \
-	make HOST_ARCH=${HOST_ARCH}  LINUX_VERSION=${LINUX_VERSION} dump-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} dump-in-docker; \
 	sudo docker rm buildlinux
 
 all : defconfig fs-defconfig rootfs image run

@@ -25,6 +25,11 @@ curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
 sudo make build-image
 ```
 如若构建失败一般是网络资源问题,请重试。
+### 3. 清除编译中间产物
+每次编译失败或者切换体系结构编译时都需要清除上一次编译中间产物
+```bash
+make cleanall
+```
 ### 3. 编译 linux
 #### 3.1 编译生成 linux 默认配置
 ```bash
@@ -45,9 +50,26 @@ make fs-defconfig
 ```bash
 make rootfs
 ```
-### 5. 运行
+### 5. 生成 usb 磁盘
+```bash
+make usbdisk
+```
+### 6. 运行
 ```bash
 make run
+```
+### 7. 正常退出
+```bash
+poweroff
+```
+### 8. 错误推出
+在卡死时,另起一个终端 :
+```bash
+ps axu | grep "/bin/sh -c qemu-system-" | sed -n "1, 1p" | awk '{print $2}' | xargs -I {} sudo kill -9 {}
+```
+或者
+```bash
+sudo docker stop buildlinux
 ```
 ## 推荐书籍
 推荐书籍清单PDF请点击[链接](https://gitee.com/Vizdl/os-books.git)。支持正版,PDF仅供学习使用,有能力的朋友买实体书多多支持一下。

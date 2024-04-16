@@ -128,7 +128,10 @@ rootfs-in-docker :
 	cd src/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs.sh
 
 fs-distclean-in-docker :
-	cd src/${BUSYBOX} && make distclean
+	cd src/${BUSYBOX} && make distclean \
+	&& rm -rf _install/ \
+	&& rm -rf rootfs.ext3 \
+	&& rm -rf rootfs.img.gz
 
 dump-in-docker :
 	objdump -s -d src/${LINUX_VERSION}/vmlinux > dump.s

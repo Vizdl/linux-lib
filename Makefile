@@ -1,7 +1,9 @@
+# 当前目录
+PWD = $(shell pwd)
 # 主机 arch
 HOST_ARCH = $(shell uname -m)
 # 编译的线程数
-THREADS ?= 128
+THREADS ?= 32
 # 编译时内存限制
 MEM ?= 64G
 # 默认目标体系结构就是主机体系结构

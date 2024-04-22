@@ -1,1 +1,12 @@
 usbdisk.img
+*.o
+*.cmd
+*.a
+*.in
+*.gz
+*.ext3
+*.html
+src/busybox-1.15.3
+src/busybox-1.30.0
+.vscode/
+vmlinux

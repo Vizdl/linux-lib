@@ -64,7 +64,7 @@ $(info HOST_ARCH[${HOST_ARCH}] LINUX_ARCH[${LINUX_ARCH}] LINUX_VERSION[${LINUX_V
 
 .PHONY += build-image run-image clean-image
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
-.PHONY += image devel run dump restartgdb rungdb stopgdb all
+.PHONY += image devel run dump restartgdb rungdb stopgdb all flush
 .PHONY += image-in-docker rootfs-in-docker 
 .PHONY += defconfig-in-docker menuconfig-in-docker
 .PHONY += fs-defconfig-in-docker fs-menuconfig-in-docker
@@ -73,14 +73,24 @@ $(info HOST_ARCH[${HOST_ARCH}] LINUX_ARCH[${LINUX_ARCH}] LINUX_VERSION[${LINUX_V
 
 defconfig-after-in-docker-x86_64 :
 	cd src/${LINUX_VERSION} && \
+	scripts/config --disable USB_OHCI_HCD && \
+	scripts/config --disable USB_UHCI_HCD && \
+	scripts/config --disable USB_EHCI_HCD && \
 	scripts/config --enable USB_XHCI_HCD && \
-	scripts/config --enable XHCI_HCD_DEBUGGING && \
+	scripts/config --disable XHCI_HCD_DEBUGGING && \
+	scripts/config --disable USB_XHCI_HCD_DEBUGGING && \
 	scripts/config --enable BLK_DEV_RAM && \
 	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
 	scripts/config --set-val BLK_DEV_RAM_SIZE 65536
 
 defconfig-after-in-docker-aarch64 :
 	cd src/${LINUX_VERSION} && \
+	scripts/config --disable USB_OHCI_HCD && \
+	scripts/config --disable USB_UHCI_HCD && \
+	scripts/config --disable USB_EHCI_HCD && \
+	scripts/config --enable USB_XHCI_HCD && \
+	scripts/config --disable XHCI_HCD_DEBUGGING && \
+	scripts/config --disable USB_XHCI_HCD_DEBUGGING && \
 	scripts/config --enable BLK_DEV_RAM && \
 	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
 	scripts/config --set-val BLK_DEV_RAM_SIZE 65536 && \
@@ -279,6 +289,8 @@ dump :
 all : defconfig fs-defconfig rootfs image run
 
 cleanall :	distclean fs-distclean
+
+flush : image run
 
 rungdb :
 	sudo docker run \

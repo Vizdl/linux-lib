@@ -178,11 +178,16 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	struct usb_hcd		*hcd;
 	int			retval;
 
+	hcd_info("dev->irq = %d\n", dev->irq);
 	if (usb_disabled())
 		return -ENODEV;
 
 	if (!id)
 		return -EINVAL;
+
+	/**
+	 * 获取 hc_driver
+	 */
 	driver = (struct hc_driver *)id->driver_data;
 	if (!driver)
 		return -EINVAL;
@@ -199,16 +204,23 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 		goto err1;
 	}
 
+	/**
+	 * 创建 hcd
+	 */
 	hcd = usb_create_hcd(driver, &dev->dev, pci_name(dev));
 	if (!hcd) {
 		retval = -ENOMEM;
 		goto err1;
 	}
 
+	/**
+	 * ioremap regs
+	 */
 	if (driver->flags & HCD_MEMORY) {
-		/* EHCI, OHCI */
+		/* EHCI, OHCI, XHCI */
 		hcd->rsrc_start = pci_resource_start(dev, 0);
 		hcd->rsrc_len = pci_resource_len(dev, 0);
+		hcd_info("rsrc_start = %llx, rsrc_len = %lx\n", hcd->rsrc_start, hcd->rsrc_len);
 		if (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len,
 				driver->description)) {
 			dev_dbg(&dev->dev, "controller already in use\n");
@@ -243,9 +255,14 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 			goto err2;
 		}
 	}
-
+	/**
+	 * 设置 pci 为 master
+	 */
 	pci_set_master(dev);
-
+	
+	/**
+	 * 添加 hcd 到 usb 子系统
+	 */
 	retval = usb_add_hcd(hcd, dev->irq, IRQF_DISABLED | IRQF_SHARED);
 	if (retval != 0)
 		goto err4;

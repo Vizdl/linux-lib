@@ -25,6 +25,21 @@
 #include <linux/interrupt.h>
 #include <linux/idr.h>
 
+#define HCI_DEBUG 1
+#define HCI_INFO 1
+
+#define hci_dbg(fmt, ...) \
+	do {					\
+		if (HCI_DEBUG) \
+			printk("hci-dbg[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
+#define hci_info(fmt, ...) \
+	do {					\
+		if (HCI_INFO) \
+			printk("hci-info[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
 #define MAX_TOPO_LEVEL		6
 
 /* This file contains declarations of usbcore internals that are mostly

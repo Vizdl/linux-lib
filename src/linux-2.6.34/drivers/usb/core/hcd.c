@@ -87,7 +87,10 @@
 unsigned long usb_hcds_loaded;
 EXPORT_SYMBOL_GPL(usb_hcds_loaded);
 
-/* host controllers we manage */
+/**
+ * usb bus 管理链表
+ * 所有注册的 usb bus 都会在该链表上
+ */
 LIST_HEAD (usb_bus_list);
 EXPORT_SYMBOL_GPL (usb_bus_list);
 
@@ -96,6 +99,9 @@ EXPORT_SYMBOL_GPL (usb_bus_list);
 struct usb_busmap {
 	unsigned long busmap [USB_MAXBUS / (8*sizeof (unsigned long))];
 };
+/**
+ * usb bus 设备号分配记录所用 bitmap
+ */
 static struct usb_busmap busmap;
 
 /* used when updating list of hcds */
@@ -888,7 +894,9 @@ static int usb_register_bus(struct usb_bus *bus)
 {
 	int result = -E2BIG;
 	int busnum;
-
+	/**
+	 * 设置 busnum
+	 */
 	mutex_lock(&usb_bus_list_lock);
 	busnum = find_next_zero_bit (busmap.busmap, USB_MAXBUS, 1);
 	if (busnum >= USB_MAXBUS) {
@@ -899,6 +907,9 @@ static int usb_register_bus(struct usb_bus *bus)
 	bus->busnum = busnum;
 
 	/* Add it to the local list of buses */
+	/**
+	 * 添加 usb bus 到链表
+	*/
 	list_add (&bus->bus_list, &usb_bus_list);
 	mutex_unlock(&usb_bus_list_lock);
 
@@ -960,10 +971,15 @@ static int register_root_hub(struct usb_hcd *hcd)
 	memset (&usb_dev->bus->devmap.devicemap, 0,
 			sizeof usb_dev->bus->devmap.devicemap);
 	set_bit (devnum, usb_dev->bus->devmap.devicemap);
+	/**
+	 * 设置 usb dev 状态 
+	 */
 	usb_set_device_state(usb_dev, USB_STATE_ADDRESS);
 
 	mutex_lock(&usb_bus_list_lock);
-
+	/**
+	 * 获取设备描述符 
+	 */
 	usb_dev->ep0.desc.wMaxPacketSize = cpu_to_le16(64);
 	retval = usb_get_device_descriptor(usb_dev, USB_DT_DEVICE_SIZE);
 	if (retval != sizeof usb_dev->descriptor) {
@@ -972,7 +988,9 @@ static int register_root_hub(struct usb_hcd *hcd)
 				dev_name(&usb_dev->dev), retval);
 		return (retval < 0) ? retval : -EMSGSIZE;
 	}
-
+	/**
+	 * 创建 usb dev
+	 */
 	retval = usb_new_device (usb_dev);
 	if (retval) {
 		dev_err (parent_dev, "can't register root hub for %s, %d\n",
@@ -1261,6 +1279,9 @@ static void hcd_free_coherent(struct usb_bus *bus, dma_addr_t *dma_handle,
 	*dma_handle = 0;
 }
 
+/**
+ * map_urb_for_dma - 对 urb 进行 dma 映射 
+ */
 static int map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb,
 			   gfp_t mem_flags)
 {
@@ -1382,14 +1403,16 @@ int usb_hcd_submit_urb (struct urb *urb, gfp_t mem_flags)
 	usb_get_urb(urb);
 	atomic_inc(&urb->use_count);
 	atomic_inc(&urb->dev->urbnum);
+	/**
+	 * usbmon 是 usb 调试用的
+	 */
 	usbmon_urb_submit(&hcd->self, urb);
 
-	/* NOTE requirements on root-hub callers (usbfs and the hub
-	 * driver, for now):  URBs' urb->transfer_buffer must be
-	 * valid and usb_buffer_{sync,unmap}() not be needed, since
-	 * they could clobber root hub response data.  Also, control
-	 * URBs must be submitted in process context with interrupts
-	 * enabled.
+	/* 
+	 * 注意对根集线器调用者（目前为usbfs和集线器驱动程序）的要求：
+	 * URB 的 urb->transfer_buffer 必须有效，并且不需要使用 usb_buffer_{sync,unmap}()，
+	 * 因为它们可能会破坏根集线器的响应数据。
+	 * 此外，控制 URB 必须在进程上下文中以启用中断的方式提交。
 	 */
 	status = map_urb_for_dma(hcd, urb, mem_flags);
 	if (unlikely(status)) {
@@ -2035,7 +2058,7 @@ struct usb_hcd *usb_create_hcd (const struct hc_driver *driver,
 	hcd->self.controller = dev;
 	hcd->self.bus_name = bus_name;
 	hcd->self.uses_dma = (dev->dma_mask != NULL);
-
+	hcd_dbg("uses_dma = %d\n", hcd->self.uses_dma);
 	init_timer(&hcd->rh_timer);
 	hcd->rh_timer.function = rh_timer_func;
 	hcd->rh_timer.data = (unsigned long) hcd;
@@ -2098,14 +2121,22 @@ int usb_add_hcd(struct usb_hcd *hcd,
 	 * bottom up so that hcds can customize the root hubs before khubd
 	 * starts talking to them.  (Note, bus id is assigned early too.)
 	 */
+	/**
+	 * 创建 hcd buffer 
+	 */
 	if ((retval = hcd_buffer_create(hcd)) != 0) {
 		dev_dbg(hcd->self.controller, "pool alloc failed\n");
 		return retval;
 	}
-
+	/**
+	 * 注册 usb_bus
+	 */
 	if ((retval = usb_register_bus(&hcd->self)) < 0)
 		goto err_register_bus;
 
+	/**
+	 * 创建 usb_device 设备
+	 */
 	if ((rhdev = usb_alloc_dev(NULL, &hcd->self, 0)) == NULL) {
 		dev_err(hcd->self.controller, "unable to allocate root hub\n");
 		retval = -ENOMEM;
@@ -2133,6 +2164,9 @@ int usb_add_hcd(struct usb_hcd *hcd,
 	 */
 	device_init_wakeup(&rhdev->dev, 1);
 
+	/**
+	 * 重启主机控制器
+	 */
 	/* "reset" is misnamed; its role is now one-time init. the controller
 	 * should already have been reset (and boot firmware kicked off etc).
 	 */
@@ -2177,12 +2211,17 @@ int usb_add_hcd(struct usb_hcd *hcd,
 					"io mem" : "io base",
 					(unsigned long long)hcd->rsrc_start);
 	}
-
+	/**
+	 * 启动主机控制器
+	*/
 	if ((retval = hcd->driver->start(hcd)) < 0) {
 		dev_err(hcd->self.controller, "startup error %d\n", retval);
 		goto err_hcd_driver_start;
 	}
 
+	/**
+	 * 注册 root hub 
+	 */
 	/* starting here, usbcore will pay attention to this root hub */
 	rhdev->bus_mA = min(500u, hcd->power_budget);
 	if ((retval = register_root_hub(hcd)) != 0)

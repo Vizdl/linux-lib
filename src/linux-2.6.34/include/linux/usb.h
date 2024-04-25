@@ -322,9 +322,15 @@ struct usb_devmap {
  * Allocated per bus (tree of devices) we have:
  */
 struct usb_bus {
+	/**
+	 * 当前设备控制器, 在 xhci 中是 pci 设备 
+	 */
 	struct device *controller;	/* host/master side hardware */
 	int busnum;			/* Bus number (in order of reg) */
 	const char *bus_name;		/* stable id (PCI slot_name etc) */
+	/**
+	 * 是否使用 dma?
+	 */
 	u8 uses_dma;			/* Does the host controller use DMA? */
 	u8 otg_port;			/* 0, or number of OTG/HNP port */
 	unsigned is_b_host:1;		/* true during some HNP roleswitches */

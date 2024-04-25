@@ -23,6 +23,22 @@
 
 #include <linux/rwsem.h>
 
+
+#define HCD_DEBUG 1
+#define HCD_INFO 1
+
+#define hcd_dbg(fmt, ...) \
+	do {					\
+		if (HCD_DEBUG) \
+			printk("hcd-dbg[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
+#define hcd_info(fmt, ...) \
+	do {					\
+		if (HCD_INFO) \
+			printk("hcd-info[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
 #define MAX_TOPO_LEVEL		6
 
 /* This file contains declarations of usbcore internals that are mostly

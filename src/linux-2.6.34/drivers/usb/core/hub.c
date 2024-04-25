@@ -1777,7 +1777,9 @@ fail:
 int usb_new_device(struct usb_device *udev)
 {
 	int err;
-
+	/**
+	 * 如果不是 root hub
+	 */
 	if (udev->parent) {
 		/* Initialize non-root-hub device wakeup to disabled;
 		 * device (un)configuration controls wakeup capable
@@ -1815,7 +1817,9 @@ int usb_new_device(struct usb_device *udev)
 		dev_err(&udev->dev, "can't device_add, error %d\n", err);
 		goto fail;
 	}
-
+	/**
+	 * 创建 ep?
+	 */
 	(void) usb_create_ep_devs(&udev->dev, &udev->ep0, udev);
 	return err;
 

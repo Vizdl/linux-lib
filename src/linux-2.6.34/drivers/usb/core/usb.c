@@ -369,6 +369,9 @@ struct usb_device *usb_alloc_dev(struct usb_device *parent,
 	struct usb_hcd *usb_hcd = container_of(bus, struct usb_hcd, self);
 	unsigned root_hub = 0;
 
+	/**
+	 * 申请 usb dev 内存
+	 */
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 	if (!dev)
 		return NULL;
@@ -384,16 +387,23 @@ struct usb_device *usb_alloc_dev(struct usb_device *parent,
 		kfree(dev);
 		return NULL;
 	}
-
+	/**
+	 * 初始化 struct device
+	 */
 	device_initialize(&dev->dev);
 	dev->dev.bus = &usb_bus_type;
 	dev->dev.type = &usb_device_type;
 	dev->dev.groups = usb_device_groups;
 	dev->dev.dma_mask = bus->controller->dma_mask;
 	set_dev_node(&dev->dev, dev_to_node(bus->controller));
+	/**
+	 * 初始化 状态与统计变量
+	 */
 	dev->state = USB_STATE_ATTACHED;
 	atomic_set(&dev->urbnum, 0);
-
+	/**
+	 * 初始化ep0
+	 */
 	INIT_LIST_HEAD(&dev->ep0.urb_list);
 	dev->ep0.desc.bLength = USB_DT_ENDPOINT_SIZE;
 	dev->ep0.desc.bDescriptorType = USB_DT_ENDPOINT;

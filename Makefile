@@ -43,7 +43,13 @@ endif
 # 根据本地体系结构与目标体系结构判断是否需要交叉编译
 CROSS_COMPILER_PERFIX ?=
 ifneq ("$(HOST_ARCH)", "$(TARGET_ARCH)")
-	CROSS_COMPILER_PERFIX = /opt/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+	ifeq ("$(LINUX_VERSION)", "linux-3.12")
+		CROSS_COMPILER_PERFIX = /opt/gcc-linaro-4.9-2016.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+	else ifeq ("$(LINUX_VERSION)", "linux-4.9.229")
+		CROSS_COMPILER_PERFIX = /opt/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+	else
+		$(error "does not support $(LINUX_VERSION) !!!");
+	endif
 endif
 
 # 待编译的 busybox 源码
@@ -51,6 +57,8 @@ BUSYBOX ?=
 # 根据待编译linux版本做选择 busybox 版本
 ifeq ("$(LINUX_VERSION)", "linux-2.6.34")
 	BUSYBOX = busybox-1.15.3
+else ifeq ("$(LINUX_VERSION)", "linux-3.12")
+	BUSYBOX = busybox-1.22.0
 else ifeq ("$(LINUX_VERSION)", "linux-4.9.229")
 	BUSYBOX = busybox-1.30.0
 else
@@ -73,6 +81,7 @@ $(info HOST_ARCH[${HOST_ARCH}] LINUX_ARCH[${LINUX_ARCH}] LINUX_VERSION[${LINUX_V
 
 defconfig-after-in-docker-x86_64 :
 	cd src/${LINUX_VERSION} && \
+	scripts/config --enable DEBUG_INFO && \
 	scripts/config --disable USB_OHCI_HCD && \
 	scripts/config --disable USB_UHCI_HCD && \
 	scripts/config --disable USB_EHCI_HCD && \
@@ -85,12 +94,13 @@ defconfig-after-in-docker-x86_64 :
 
 defconfig-after-in-docker-aarch64 :
 	cd src/${LINUX_VERSION} && \
+	scripts/config --enable DEBUG_INFO && \
 	scripts/config --disable USB_OHCI_HCD && \
 	scripts/config --disable USB_UHCI_HCD && \
 	scripts/config --disable USB_EHCI_HCD && \
 	scripts/config --enable USB_XHCI_HCD && \
-	scripts/config --disable XHCI_HCD_DEBUGGING && \
-	scripts/config --disable USB_XHCI_HCD_DEBUGGING && \
+	scripts/config --enable XHCI_HCD_DEBUGGING && \
+	scripts/config --enable USB_XHCI_HCD_DEBUGGING && \
 	scripts/config --enable BLK_DEV_RAM && \
 	scripts/config --set-val BLK_DEV_RAM_COUNT 16 && \
 	scripts/config --set-val BLK_DEV_RAM_SIZE 65536 && \
@@ -122,7 +132,18 @@ image-in-docker :
 	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} CROSS_COMPILE=${CROSS_COMPILER_PERFIX} ${IMAGE} -j$(THREADS)
 
 gdb-in-docker :
-	qemu-system-x86_64 -kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/bzImage -s -S -append "console=ttyS0" -nographic
+	qemu-system-${TARGET_ARCH}  \
+		-nographic \
+		${MACHINE} \
+		-smp 4 -m 2G \
+		-device ${HCI} \
+		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
+		-usb -device usb-storage,drive=my_usb_disk \
+		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${IMAGE} \
+		-initrd src/${BUSYBOX}/rootfs.img.gz \
+		-s -S \
+		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
+
 
 fs-defconfig-in-docker :
 	cd src/${BUSYBOX} && make defconfig && \
@@ -154,7 +175,7 @@ run-in-docker :
 		-device ${HCI} \
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
-		-kernel ./src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${IMAGE} \
+		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
 		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
 

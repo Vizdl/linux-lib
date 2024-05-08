@@ -67,7 +67,6 @@ int pci_add_dynid(struct pci_driver *drv,
 	dynid->id.class = class;
 	dynid->id.class_mask = class_mask;
 	dynid->id.driver_data = driver_data;
-
 	spin_lock(&drv->dynids.lock);
 	list_add_tail(&dynid->node, &drv->dynids.list);
 	spin_unlock(&drv->dynids.lock);
@@ -407,6 +406,7 @@ static int pci_device_probe(struct device *dev)
 		return error;
 
 	pci_dev_get(pci_dev);
+	dl_pci_info("dev = %s, pci_dev->irq = %d\n", dev_name(dev), pci_dev->irq);
 	error = __pci_device_probe(drv, pci_dev);
 	if (error) {
 		pcibios_free_irq(pci_dev);
@@ -1301,6 +1301,7 @@ int __pci_register_driver(struct pci_driver *drv, struct module *owner,
 
 	spin_lock_init(&drv->dynids.lock);
 	INIT_LIST_HEAD(&drv->dynids.list);
+	dl_pci_info("driver_register, drv = %s\n", drv->name);
 
 	/* register with core */
 	return driver_register(&drv->driver);
@@ -1369,6 +1370,7 @@ static int pci_bus_match(struct device *dev, struct device_driver *drv)
 
 	pci_drv = to_pci_driver(drv);
 	found_id = pci_match_device(pci_drv, pci_dev);
+	// dl_pci_info("drv = %s, dev = %s, found_id = %p\n", pci_drv->name, dev_name(dev), found_id);
 	if (found_id)
 		return 1;
 

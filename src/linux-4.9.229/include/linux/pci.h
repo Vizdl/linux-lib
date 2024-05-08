@@ -34,6 +34,21 @@
 
 #include <linux/pci_ids.h>
 
+#define DL_PCI_DEBUG 1
+#define DL_PCI_INFO 1
+
+#define dl_pci_dbg(fmt, ...) \
+	do {					\
+		if (DL_PCI_DEBUG) \
+			printk("pci-dbg[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
+#define dl_pci_info(fmt, ...) \
+	do {					\
+		if (DL_PCI_INFO) \
+			printk("pci-info[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
 /*
  * The PCI interface treats multi-function devices as independent
  * devices.  The slot/function address of each device is encoded
@@ -1165,6 +1180,8 @@ void pci_add_resource(struct list_head *resources, struct resource *res);
 void pci_add_resource_offset(struct list_head *resources, struct resource *res,
 			     resource_size_t offset);
 void pci_free_resource_list(struct list_head *resources);
+void pci_dump_resource(struct list_head *resources);
+void dump_resource(const char* text, struct resource *res);
 void pci_bus_add_resource(struct pci_bus *bus, struct resource *res,
 			  unsigned int flags);
 struct resource *pci_bus_resource_n(const struct pci_bus *bus, int n);

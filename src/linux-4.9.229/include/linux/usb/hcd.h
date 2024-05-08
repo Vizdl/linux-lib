@@ -25,19 +25,19 @@
 #include <linux/interrupt.h>
 #include <linux/idr.h>
 
-#define HCI_DEBUG 1
-#define HCI_INFO 1
+#define HCD_DEBUG 1
+#define HCD_INFO 1
 
-#define hci_dbg(fmt, ...) \
+#define hcd_dbg(fmt, ...) \
 	do {					\
-		if (HCI_DEBUG) \
-			printk("hci-dbg[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+		if (HCD_DEBUG) \
+			printk("hcd-dbg[%s] : "fmt, __func__, ##__VA_ARGS__);	\
 	} while(0)
 
-#define hci_info(fmt, ...) \
+#define hcd_info(fmt, ...) \
 	do {					\
-		if (HCI_INFO) \
-			printk("hci-info[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+		if (HCD_INFO) \
+			printk("hcd-info[%s] : "fmt, __func__, ##__VA_ARGS__);	\
 	} while(0)
 
 #define MAX_TOPO_LEVEL		6

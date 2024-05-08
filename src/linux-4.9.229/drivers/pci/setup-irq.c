@@ -51,7 +51,7 @@ static void pdev_fixup_irq(struct pci_dev *dev,
 	dev->irq = irq;
 
 	dev_dbg(&dev->dev, "fixup irq: got %d\n", dev->irq);
-
+	dl_pci_info("fixup %s irq: got %d\n", dev_name(&dev->dev), dev->irq);
 	/* Always tell the device, so the driver knows what is
 	   the real IRQ to use; the device does not use it. */
 	pcibios_update_irq(dev, irq);

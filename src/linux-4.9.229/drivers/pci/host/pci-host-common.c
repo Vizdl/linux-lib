@@ -36,6 +36,8 @@ static int gen_pci_parse_request_of_pci_ranges(struct device *dev,
 	if (err)
 		return err;
 
+	// pci_dump_resource(resources);
+
 	err = devm_request_pci_bus_resources(dev, resources);
 	if (err)
 		return err;
@@ -91,6 +93,7 @@ static struct pci_config_window *gen_pci_init(struct device *dev,
 		dev_err(dev, "missing \"reg\" property\n");
 		goto err_out;
 	}
+	// dump_resource("dl-resource", &cfgres);
 
 	cfg = pci_ecam_create(dev, &cfgres, bus_range, ops);
 	if (IS_ERR(cfg)) {

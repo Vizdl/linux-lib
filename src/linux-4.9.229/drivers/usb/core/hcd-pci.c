@@ -189,7 +189,7 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	int			retval;
 	int			hcd_irq = 0;
 
-	hci_info("dev->irq = %d\n", dev->irq);
+	hcd_info("dev->irq = %d\n", dev->irq);
 
 	if (usb_disabled())
 		return -ENODEV;
@@ -231,7 +231,7 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 		/* EHCI, OHCI */
 		hcd->rsrc_start = pci_resource_start(dev, 0);
 		hcd->rsrc_len = pci_resource_len(dev, 0);
-		hci_info("rsrc_start = %llx, rsrc_len = %lx\n", hcd->rsrc_start, hcd->rsrc_len);
+		hcd_info("rsrc_start = %llx, rsrc_len = %lx\n", hcd->rsrc_start, hcd->rsrc_len);
 		if (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len,
 				driver->description)) {
 			dev_dbg(&dev->dev, "controller already in use\n");

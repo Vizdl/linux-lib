@@ -1237,7 +1237,7 @@ int pci_setup_device(struct pci_dev *dev)
 	dev->revision = class & 0xff;
 	dev->class = class >> 8;		    /* upper 3 bytes */
 
-	dev_printk(KERN_DEBUG, &dev->dev, "[%04x:%04x] type %02x class %#08x\n",
+	dev_printk(KERN_INFO, &dev->dev, "[%04x:%04x] type %02x class %#08x\n",
 		   dev->vendor, dev->device, dev->hdr_type, dev->class);
 
 	/* need to have dev->class ready */
@@ -1856,6 +1856,7 @@ void pci_device_add(struct pci_dev *dev, struct pci_bus *bus)
 
 	/* Notifier could use PCI capabilities */
 	dev->match_driver = false;
+	dl_pci_info("device_add, dev = %s, pci->irq = %d\n", dev_name(&dev->dev), dev->irq);
 	ret = device_add(&dev->dev);
 	WARN_ON(ret < 0);
 }
@@ -2290,6 +2291,9 @@ struct pci_bus *pci_create_root_bus(struct device *parent, int bus,
 				 (unsigned long long) (res->end - offset));
 		} else
 			bus_addr[0] = '\0';
+		/**
+		 * %pR 是 linux 用于输出资源的一种格式...
+		 */
 		dev_info(&b->dev, "root bus resource %pR%s\n", res, bus_addr);
 	}
 

@@ -39,6 +39,25 @@ void pci_add_resource(struct list_head *resources, struct resource *res)
 }
 EXPORT_SYMBOL(pci_add_resource);
 
+void dump_resource(const char* text, struct resource *res)
+{
+	printk("%s : %s, %lx, %llx, %llx\n", 
+		text, res->name != NULL ? res->name : "NULL", 
+		res->flags, res->start, res->end
+	);
+}
+EXPORT_SYMBOL(dump_resource);
+
+void pci_dump_resource(struct list_head *resources)
+{
+	struct resource_entry *window;
+	resource_list_for_each_entry(window, resources)
+	{
+		dump_resource("pci-resource", window->res);
+	}
+}
+EXPORT_SYMBOL(pci_dump_resource);
+
 void pci_free_resource_list(struct list_head *resources)
 {
 	resource_list_free(resources);

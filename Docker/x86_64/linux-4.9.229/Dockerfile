@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /workdir
 RUN	apt-get update
 RUN	apt-get install gcc -y
-RUN apt-get install gdb -y
+RUN	apt-get install gdb-multiarch -y
 RUN apt-get install qemu -y
 RUN apt-get install make -y
 RUN apt-get install dos2unix -y

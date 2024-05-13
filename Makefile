@@ -26,10 +26,12 @@ ifeq ("$(TARGET_ARCH)", "x86_64")
 	LINUX_ARCH = x86_64
 	CONSOLE = ttyS0
 	IMAGE = bzImage
+	GDBARCH = i386:x86-64
 else ifeq ("$(TARGET_ARCH)", "aarch64")
 	LINUX_ARCH = arm64
 	CONSOLE = ttyAMA0
 	IMAGE = Image
+	GDBARCH = aarch64
 	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
 	HCI = qemu-xhci
 	ifeq ("$(LINUX_VERSION)", "linux-2.6.34")
@@ -70,14 +72,19 @@ endif
 $(info THREADS[${THREADS}] MEM[${MEM}]);
 $(info HOST_ARCH[${HOST_ARCH}] LINUX_ARCH[${LINUX_ARCH}] LINUX_VERSION[${LINUX_VERSION}] BUSYBOX[${BUSYBOX}]);
 
+# docker image
 .PHONY += build-image run-image clean-image
+# config
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
-.PHONY += image devel run dump restartgdb rungdb stopgdb all flush
-.PHONY += image-in-docker rootfs-in-docker 
+# compile and run
+.PHONY += image devel run dump all flush cleanall
+# debug
+.PHONY += gdb-start gdb-stop gdb-restart gdb-attch debug
+.PHONY += image-in-docker rootfs-in-docker
 .PHONY += defconfig-in-docker menuconfig-in-docker
 .PHONY += fs-defconfig-in-docker fs-menuconfig-in-docker
 .PHONY += clean-in-docker distclean-in-Docker
-.PHONY += gdb-in-docker dump-in-docker
+.PHONY += gdb-start-in-docker dump-in-docker
 
 defconfig-after-in-docker-x86_64 :
 	cd src/${LINUX_VERSION} && \
@@ -131,7 +138,7 @@ clean-in-docker :
 image-in-docker :
 	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} CROSS_COMPILE=${CROSS_COMPILER_PERFIX} ${IMAGE} -j$(THREADS)
 
-gdb-in-docker :
+gdb-start-in-docker :
 	qemu-system-${TARGET_ARCH}  \
 		-nographic \
 		${MACHINE} \
@@ -143,7 +150,6 @@ gdb-in-docker :
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
 		-s -S \
 		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
-
 
 fs-defconfig-in-docker :
 	cd src/${BUSYBOX} && make defconfig && \
@@ -181,6 +187,11 @@ run-in-docker :
 
 usbdisk-in-docker:
 	bash scripts/create_usbdisk.sh
+
+gdb-connect-in-docker:
+	gdb-multiarch src/${LINUX_VERSION}/vmlinux -q \
+	-ex "set architecture ${GDBARCH}" \
+	-ex " target remote localhost:1234"
 
 # 在镜像外的操作
 build-image :
@@ -313,19 +324,22 @@ cleanall :	distclean fs-distclean
 
 flush : image run
 
-rungdb :
+gdb-start :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	-p 1234:1234 \
 	--name gdb \
 	-itd ${DOCKER_IMAGE} \
-	make gdb-in-docker
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} gdb-start-in-docker
 
-stopgdb :
+gdb-stop :
 	sudo docker stop gdb; \
 	sudo docker rm gdb
 
-restartgdb : stopgdb rungdb
+gdb-attch :
+	sudo docker exec -it gdb /bin/bash
 
-debug :
-	gdb src/${LINUX_VERSION}/vmlinux -q -ex "target remote localhost:1234"
+gdb-restart : gdb-stop gdb-start
+
+gdb-connect :
+	sudo docker exec -it gdb \
+	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} gdb-connect-in-docker

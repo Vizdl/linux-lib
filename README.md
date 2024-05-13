@@ -20,43 +20,50 @@ linux-lib 是依赖容器来编译内核的,所以需要先安装 docker
 ```
 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
 ```
-### 2. 如何构建 linux-lib docker 镜像?
+### 2. 选定需要编译的内核版本以及体系结构
+例如需要编译内核版本 linux-4.9.299 运行在 aarch64 上, 则需要使用脚本 aarch64-4.9.sh
+执行
+```c
+sudo bash aarch64-4.9.sh help
+```
+查看支持指令
+### 3. 如何构建 linux-lib docker 镜像?
 ```bash
-sudo make build-image
+sudo bash aarch64-4.9.sh build-image
 ```
 如若构建失败一般是网络资源问题,请重试。
 ### 3. 清除编译中间产物
 每次编译失败或者切换体系结构编译时都需要清除上一次编译中间产物
 ```bash
-make cleanall
+sudo bash aarch64-4.9.sh cleanall
 ```
 ### 3. 编译 linux
 #### 3.1 编译生成 linux 默认配置
 ```bash
-make defconfig
+sudo bash aarch64-4.9.sh defconfig
 ```
 编译 linux 默认配置时,该项目通过 `scripts/config` 修改了默认配置, 将 RAM dist size 设置为 65536。
 #### 3.3 编译生成 linux 镜像
 ```bash
-make image
+sudo bash aarch64-4.9.sh image
 ```
 ### 4. 编译 busybox 作为 rootfs
 #### 4.1 编译生成 busybox 默认配置
 ```bash
-make fs-defconfig
+sudo bash aarch64-4.9.sh fs-defconfig
 ```
 该项目生成的 busybox 默认配置就将 busybox 二进制文件设置为静态编译。
 #### 4.3 编译生成 rootfs 文件
 ```bash
-make rootfs
+sudo bash aarch64-4.9.sh rootfs
 ```
 ### 5. 生成 usb 磁盘
 ```bash
-make usbdisk
+sudo bash aarch64-4.9.sh usbdisk
 ```
 ### 6. 运行
 ```bash
-make run
+sudo bash aarch64-4.9.sh run
 ```
 ### 7. 正常退出
 ```bash

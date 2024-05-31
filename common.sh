@@ -23,11 +23,11 @@ func["cleanall"]="清除所有生成结果"
 function usage()
 {
 	echo "功能名作为脚本的第一个参数传入，例如："
-	echo "  bash ${0} image"
+	echo "	bash ${0} image"
 	echo "以下是该脚本支持的全部功能："
 	# 遍历关联数组中的所有键值对
 	for key in "${!func[@]}"; do
-		echo "$key : ${func[$key]}"
+		echo "	$key : ${func[$key]}"
 	done
 }
 

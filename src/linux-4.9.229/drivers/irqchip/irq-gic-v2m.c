@@ -64,6 +64,9 @@ struct v2m_data {
 	struct list_head entry;
 	struct fwnode_handle *fwnode;
 	struct resource res;	/* GICv2m resource */
+	/**
+	 * res 映射的虚拟地址
+	 */
 	void __iomem *base;	/* GICv2m virt address */
 	u32 spi_start;		/* The SPI number that MSIs start */
 	u32 nr_spis;		/* The number of SPIs for MSIs */
@@ -176,6 +179,9 @@ static int gicv2m_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
 	struct v2m_data *v2m = NULL, *tmp;
 	int hwirq, offset, err = 0;
 
+	/**
+	 * 随便找个没用过的硬中断
+	 */
 	spin_lock(&v2m_lock);
 	list_for_each_entry(tmp, &v2m_nodes, entry) {
 		offset = find_first_zero_bit(tmp->bm, tmp->nr_spis);

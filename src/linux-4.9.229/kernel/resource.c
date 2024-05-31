@@ -213,19 +213,29 @@ static struct resource *alloc_resource(gfp_t flags)
 	return res;
 }
 
-/* Return the conflict entry if you can't request it */
+/**
+ * __request_resource - 将 new 添加到 root, 如若失败则返回冲突节点
+ * @root: 待插入的节点
+ * @new: 新节点
+ */
 static struct resource * __request_resource(struct resource *root, struct resource *new)
 {
 	resource_size_t start = new->start;
 	resource_size_t end = new->end;
 	struct resource *tmp, **p;
-
+	/**
+	 * 如若资源区间错误,或超出 root 资源范围
+	 */
 	if (end < start)
 		return root;
 	if (start < root->start)
 		return root;
 	if (end > root->end)
 		return root;
+	/**
+	 * 遍历 root 的所有儿子节点，将新节点插入到合适的位置
+	 * 插入成功返回 NULL, 失败则将与其有冲突节点返回
+	 */
 	p = &root->child;
 	for (;;) {
 		tmp = *p;
@@ -242,6 +252,11 @@ static struct resource * __request_resource(struct resource *root, struct resour
 	}
 }
 
+/**
+ * __release_resource - 将 old 从根节点拆除 
+ * @old: 需要拆除的节点
+ * @release_child: 是否拆除 old 的子节点
+ */
 static int __release_resource(struct resource *old, bool release_child)
 {
 	struct resource *tmp, **p, *chd;
@@ -303,6 +318,8 @@ void release_child_resources(struct resource *r)
 
 /**
  * request_resource_conflict - request and reserve an I/O or memory resource
+ * 用于检查指定资源是否与已分配的其他资源冲突。
+ * 
  * @root: root resource descriptor
  * @new: resource descriptor desired by caller
  *
@@ -591,9 +608,16 @@ static void resource_clip(struct resource *res, resource_size_t min,
 		res->end = max;
 }
 
-/*
+/**
+ * __find_resource - 在 root 资源节点下开辟大小为 size 且满足对齐的资源
  * Find empty slot in the resource tree with the given range and
  * alignment constraints
+ * 如若旧资源存在则使用旧资源的空间, 但若旧资源不满足对齐条件则开辟新的资源
+ * @root: 父资源
+ * @old: 旧资源
+ * @new: 传出参数, 新开辟的资源
+ * @size: 资源的大小
+ * @constraint: 对齐相关结构
  */
 static int __find_resource(struct resource *root, struct resource *old,
 			 struct resource *new,
@@ -641,7 +665,8 @@ static int __find_resource(struct resource *root, struct resource *old,
 			}
 		}
 
-next:		if (!this || this->end == root->end)
+next:		
+		if (!this || this->end == root->end)
 			break;
 
 		if (this != old)
@@ -761,6 +786,7 @@ EXPORT_SYMBOL(allocate_resource);
 
 /**
  * lookup_resource - find an existing resource by a resource start address
+ * 通过 start 查找已存在的资源
  * @root: root resource descriptor
  * @start: resource start address
  *
@@ -938,6 +964,12 @@ int remove_resource(struct resource *old)
 }
 EXPORT_SYMBOL_GPL(remove_resource);
 
+/**
+ * __adjust_resource - 调整资源
+ * @res: 待调整的资源
+ * @start: 资源的开始地址
+ * @size: 资源大小
+ */
 static int __adjust_resource(struct resource *res, resource_size_t start,
 				resource_size_t size)
 {
@@ -947,13 +979,20 @@ static int __adjust_resource(struct resource *res, resource_size_t start,
 
 	if (!parent)
 		goto skip;
-
+	/**
+	 * 确保 start/end 不超出父资源的范围
+	 */
 	if ((start < parent->start) || (end > parent->end))
 		goto out;
-
+	/**
+	 * 确保 end 不超出了当前资源的弟弟的 start
+	 */
 	if (res->sibling && (res->sibling->start <= end))
 		goto out;
 
+	/**
+	 * 确保 start 不超出了当前资源的哥哥的 end
+	 */
 	tmp = parent->child;
 	if (tmp != res) {
 		while (tmp->sibling != res)
@@ -963,6 +1002,9 @@ static int __adjust_resource(struct resource *res, resource_size_t start,
 	}
 
 skip:
+	/**
+	 * 确保 start/end 包含子资源的范围
+	 */
 	for (tmp = res->child; tmp; tmp = tmp->sibling)
 		if ((tmp->start < start) || (tmp->end > end))
 			goto out;

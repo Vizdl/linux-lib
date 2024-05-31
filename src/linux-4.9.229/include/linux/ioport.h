@@ -21,8 +21,15 @@ struct resource {
 	const char *name;
 	unsigned long flags;
 	unsigned long desc;
+	/**
+	 * parent: 当前资源的父资源
+	 * sibling: 当前资源的弟弟
+	 * child: 当前资源的长子
+	 */
 	struct resource *parent, *sibling, *child;
 };
+
+void dump_resource(const char* text, struct resource *res);
 
 /*
  * IO resources have these defined flags.

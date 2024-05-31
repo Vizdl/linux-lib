@@ -283,6 +283,8 @@ static int xhci_setup_msix(struct xhci_hcd *xhci)
 	struct usb_hcd *hcd = xhci_to_hcd(xhci);
 	struct pci_dev *pdev = to_pci_dev(hcd->self.controller);
 
+
+	hcd_info(xhci, "%s : coming\n", __func__);
 	/*
 	 * calculate number of msi-x vectors supported.
 	 * - HCS_MAX_INTRS: the max number of interrupts the host can handle,
@@ -312,6 +314,7 @@ static int xhci_setup_msix(struct xhci_hcd *xhci)
 	}
 
 	for (i = 0; i < xhci->msix_count; i++) {
+		hcd_info(xhci, "request irq = 0x%x\n", xhci->msix_entries[i].vector);
 		ret = request_irq(xhci->msix_entries[i].vector,
 				xhci_msi_irq,
 				0, "xhci_hcd", xhci_to_hcd(xhci));

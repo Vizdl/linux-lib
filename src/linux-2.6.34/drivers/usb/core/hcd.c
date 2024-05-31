@@ -1280,7 +1280,7 @@ static void hcd_free_coherent(struct usb_bus *bus, dma_addr_t *dma_handle,
 }
 
 /**
- * map_urb_for_dma - 对 urb 进行 dma 映射 
+ * map_urb_for_dma - 对 urb 进行 dma 映射
  */
 static int map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb,
 			   gfp_t mem_flags)

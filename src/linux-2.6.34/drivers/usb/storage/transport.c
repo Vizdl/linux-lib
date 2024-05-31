@@ -1025,6 +1025,9 @@ int usb_stor_Bulk_transport(struct scsi_cmnd *srb, struct us_data *us)
 {
 	struct bulk_cb_wrap *bcb = (struct bulk_cb_wrap *) us->iobuf;
 	struct bulk_cs_wrap *bcs = (struct bulk_cs_wrap *) us->iobuf;
+	/**
+	 * 读写缓冲区的长度
+	 */
 	unsigned int transfer_length = scsi_bufflen(srb);
 	unsigned int residue;
 	int result;

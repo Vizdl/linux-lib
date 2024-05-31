@@ -56,6 +56,9 @@ struct usb_hub {
 	int			nerrors;	/* track consecutive errors */
 
 	struct list_head	event_list;	/* hubs w/data or errs ready */
+	/**
+	 * 是否发生事件
+	 */
 	unsigned long		event_bits[1];	/* status change bitmask */
 	unsigned long		change_bits[1];	/* ports with logical connect
 							status change */
@@ -89,13 +92,20 @@ struct usb_hub {
  * change to USB_STATE_NOTATTACHED even when the semaphore isn't held. */
 static DEFINE_SPINLOCK(device_state_lock);
 
-/* khubd's worklist and its lock */
+/**
+ * hub 事件列表与锁
+ */
 static DEFINE_SPINLOCK(hub_event_lock);
 static LIST_HEAD(hub_event_list);	/* List of hubs needing servicing */
 
-/* Wakes up khubd */
+/**
+ * hub 事件内核线程空闲等待队列
+ */
 static DECLARE_WAIT_QUEUE_HEAD(khubd_wait);
 
+/**
+ * hub 事件处理内核线程
+ */
 static struct task_struct *khubd_task;
 
 /* cycle leds on hubs that aren't blinking for attention */
@@ -372,12 +382,19 @@ static int hub_port_status(struct usb_hub *hub, int port1,
 	return ret;
 }
 
+/**
+ * kick_khubd - 使用内核线程 khubd 异步处理 hub 事件
+ * @hub: 发生事件的 hub
+ */
 static void kick_khubd(struct usb_hub *hub)
 {
 	unsigned long	flags;
 
 	spin_lock_irqsave(&hub_event_lock, flags);
 	if (!hub->disconnected && list_empty(&hub->event_list)) {
+		/**
+		 * 将 hub 移动到事件列表, 并唤醒堵塞在 khubd_wait 的内核线程
+		 */
 		list_add_tail(&hub->event_list, &hub_event_list);
 
 		/* Suppress autosuspend until khubd runs */
@@ -2625,6 +2642,7 @@ hub_port_init (struct usb_hub *hub, struct usb_device *udev, int port1,
 	char 			*speed, *type;
 	int			devnum = udev->devnum;
 
+	hcd_info("port1 = %d, retry_counter = %d\n", port1, retry_counter);
 	/* root hub ports have a slightly longer reset period
 	 * (from USB 2.0 spec, section 7.1.7.5)
 	 */
@@ -3198,6 +3216,11 @@ done:
 		hcd->driver->relinquish_port(hcd, port1);
 }
 
+/**
+ * hub_events - hub events 处理函数
+ * 
+ * 该函数从 hub_event_list 获取触发事件的 hub
+ */
 static void hub_events(void)
 {
 	struct list_head *tmp;
@@ -3220,7 +3243,7 @@ static void hub_events(void)
 	 */
 	while (1) {
 
-		/* Grab the first entry at the beginning of the list */
+		/* 获取列表开头的第一个条目 */
 		spin_lock_irq(&hub_event_lock);
 		if (list_empty(&hub_event_list)) {
 			spin_unlock_irq(&hub_event_lock);
@@ -3233,7 +3256,9 @@ static void hub_events(void)
 		hub = list_entry(tmp, struct usb_hub, event_list);
 		kref_get(&hub->kref);
 		spin_unlock_irq(&hub_event_lock);
-
+		/**
+		 * 获取到触发事件的 hub, 真正地去处理事件
+		 */
 		hdev = hub->hdev;
 		hub_dev = hub->intfdev;
 		intf = to_usb_interface(hub_dev);
@@ -3284,7 +3309,9 @@ static void hub_events(void)
 			hub->error = 0;
 		}
 
-		/* deal with port status changes */
+		/**
+		 * 遍历所有端口,并处理端口变化
+		 */
 		for (i = 1; i <= hub->descriptor->bNbrPorts; i++) {
 			if (test_bit(i, hub->busy_bits))
 				continue;
@@ -3292,7 +3319,9 @@ static void hub_events(void)
 			if (!test_and_clear_bit(i, hub->event_bits) &&
 					!connect_change)
 				continue;
-
+			/**
+			 * 确定发生事件, 获取 port 详细信息
+			 */
 			ret = hub_port_status(hub, i,
 					&portstatus, &portchange);
 			if (ret < 0)
@@ -3303,7 +3332,9 @@ static void hub_events(void)
 					USB_PORT_FEAT_C_CONNECTION);
 				connect_change = 1;
 			}
-
+			/**
+			 * 如若端口变为 ENABLE 
+			 */
 			if (portchange & USB_PORT_STAT_C_ENABLE) {
 				if (!connect_change)
 					dev_dbg (hub_dev,
@@ -3372,7 +3403,9 @@ static void hub_events(void)
 				clear_port_feature(hdev, i,
 					USB_PORT_FEAT_C_RESET);
 			}
-
+			/**
+			 * 如若连接状态发生改变
+			 */
 			if (connect_change)
 				hub_port_connect_change(hub, i,
 						portstatus, portchange);
@@ -3426,7 +3459,13 @@ static int hub_thread(void *__unused)
 	set_freezable();
 
 	do {
+		/**
+		 * 处理 hub events 
+		 */
 		hub_events();
+		/**
+		 * 空闲时, 在 khubd_wait 等待事件发生
+		 */
 		wait_event_freezable(khubd_wait,
 				!list_empty(&hub_event_list) ||
 				kthread_should_stop());

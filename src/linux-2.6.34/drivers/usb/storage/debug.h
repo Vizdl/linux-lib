@@ -54,7 +54,11 @@ void usb_stor_show_sense( unsigned char key,
 #define US_DEBUGPX(x...) printk( x )
 #define US_DEBUG(x) x 
 #else
-#define US_DEBUGP(x...)
+// #define US_DEBUGP(x...)
+#define US_DEBUGP(fmt, ...) \
+	do {					\
+		printk("usb-storage[%s]: "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
 #define US_DEBUGPX(x...)
 #define US_DEBUG(x)
 #endif

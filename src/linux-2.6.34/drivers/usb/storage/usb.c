@@ -268,6 +268,9 @@ static int usb_stor_control_thread(void * __us)
 
 	for(;;) {
 		US_DEBUGP("*** thread sleeping.\n");
+		/**
+		 * 等待指令
+		 */
 		if (wait_for_completion_interruptible(&us->cmnd_ready))
 			break;
 

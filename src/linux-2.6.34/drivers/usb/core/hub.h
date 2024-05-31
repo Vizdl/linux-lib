@@ -92,8 +92,17 @@ struct usb_port_status {
  * See USB 2.0 spec Table 11-22
  * Bits 0 to 4 shown, bits 5 to 15 are reserved
  */
+/**
+ * 状态变为 CONNECTION
+ */
 #define USB_PORT_STAT_C_CONNECTION	0x0001
+/**
+ * 状态变为 ENABLE
+ */
 #define USB_PORT_STAT_C_ENABLE		0x0002
+/**
+ * 状态变为 SUSPEND
+ */
 #define USB_PORT_STAT_C_SUSPEND		0x0004
 #define USB_PORT_STAT_C_OVERCURRENT	0x0008
 #define USB_PORT_STAT_C_RESET		0x0010

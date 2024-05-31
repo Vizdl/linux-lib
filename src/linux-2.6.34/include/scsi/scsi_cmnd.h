@@ -79,10 +79,16 @@ struct scsi_cmnd {
 	unsigned char prot_op;
 	unsigned char prot_type;
 
+	/**
+	 * 指令长度
+	 */
 	unsigned short cmd_len;
 	enum dma_data_direction sc_data_direction;
 
 	/* These elements define the operation we are about to perform */
+	/**
+	 * 指令内容 
+	 */
 	unsigned char *cmnd;
 
 

@@ -5,35 +5,45 @@ HOST_ARCH = $(shell uname -m)
 # 编译的线程数
 THREADS ?= 32
 # 编译时内存限制
-MEM ?= 64G
+MEM_LIMIT ?= 64G
 # 默认目标体系结构就是主机体系结构
 # 如若想交叉编译,则需要指定
 TARGET_ARCH ?= ${HOST_ARCH}
-# 待编译的 linux 源码
+# 待编译的 linux 源码版本
 LINUX_VERSION ?= linux-4.9.229
 # docker 镜像名
 DOCKER_IMAGE = linux-lib-${TARGET_ARCH}-${LINUX_VERSION}:latest
-# USB 主机控制器
-HCI = nec-usb-xhci
+# docker 容器名
+DOCKER_CONTAINER = linux-lib-${TARGET_ARCH}-${LINUX_VERSION}
 
-# 对应 linux 体系结构名
+# 环境检测
+## 1. 编译主机必须是 x64 体系结构
+ifeq ($(findstring x86_64,$(HOST_ARCH)),)
+$(error "The system has detected that your host is not an x64 architecture.");
+endif
+
+# 动态变量设置
+## 1. 根据目标体系结构判断 linux 的对应目录名
 LINUX_ARCH ?=
-CONSOLE ?=
-IMAGE ?=
-MACHINE ?=
-# 根据目标体系结构判断 linux 的对应目录名
+LINUX_CONSOLE ?=
+LINUX_IMAGE ?=
+QEMU_MACHINE ?=
+GDB_ARCH ?=
+### USB 主机控制器
+QEMU_USB_HCI ?=
 ifeq ("$(TARGET_ARCH)", "x86_64")
 	LINUX_ARCH = x86_64
-	CONSOLE = ttyS0
-	IMAGE = bzImage
-	GDBARCH = i386:x86-64
+	LINUX_CONSOLE = ttyS0
+	LINUX_IMAGE = bzImage
+	GDB_ARCH = i386:x86-64
+	QEMU_USB_HCI = nec-usb-xhci
 else ifeq ("$(TARGET_ARCH)", "aarch64")
 	LINUX_ARCH = arm64
-	CONSOLE = ttyAMA0
-	IMAGE = Image
-	GDBARCH = aarch64
-	MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
-	HCI = qemu-xhci
+	LINUX_CONSOLE = ttyAMA0
+	LINUX_IMAGE = Image
+	GDB_ARCH = aarch64
+	QEMU_MACHINE = -machine virt,gic-version=2 -cpu cortex-a53
+	QEMU_USB_HCI = qemu-xhci
 	ifeq ("$(LINUX_VERSION)", "linux-2.6.34")
 		$(error "linux-2.6.34 does not support aarch64!!!");
 	endif
@@ -41,8 +51,7 @@ else
 	$(error "unkown arch!!!");
 endif
 
-
-# 根据本地体系结构与目标体系结构判断是否需要交叉编译
+## 2. 根据本地体系结构与目标体系结构判断是否需要交叉编译
 CROSS_COMPILER_PERFIX ?=
 ifneq ("$(HOST_ARCH)", "$(TARGET_ARCH)")
 	ifeq ("$(LINUX_VERSION)", "linux-3.12")
@@ -54,9 +63,9 @@ ifneq ("$(HOST_ARCH)", "$(TARGET_ARCH)")
 	endif
 endif
 
-# 待编译的 busybox 源码
+### 待编译的 busybox 源码
 BUSYBOX ?=
-# 根据待编译linux版本做选择 busybox 版本
+## 3. 根据待编译linux版本做选择 busybox 版本
 ifeq ("$(LINUX_VERSION)", "linux-2.6.34")
 	BUSYBOX = busybox-1.15.3
 else ifeq ("$(LINUX_VERSION)", "linux-3.12")
@@ -68,9 +77,13 @@ else
 endif
 
 # debug 提示
-# $(info IMAGE[${IMAGE}] CONSOLE[${CONSOLE}]);
-$(info THREADS[${THREADS}] MEM[${MEM}]);
-$(info HOST_ARCH[${HOST_ARCH}] LINUX_ARCH[${LINUX_ARCH}] LINUX_VERSION[${LINUX_VERSION}] BUSYBOX[${BUSYBOX}]);
+$(info 编译信息如下：);
+$(info 主机体系结构 = ${HOST_ARCH});
+$(info 目标体系结构 = ${TARGET_ARCH});
+$(info 编译线程数 = ${THREADS});
+$(info 编译时内存限制 = ${MEM_LIMIT});
+$(info 编译Linux版本 = ${LINUX_VERSION});
+$(info 编译BUSYBOX版本 = ${BUSYBOX});
 
 # docker image
 .PHONY += build-image run-image clean-image
@@ -136,20 +149,20 @@ clean-in-docker :
 	cd src/${LINUX_VERSION} && make clean
 
 image-in-docker :
-	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} CROSS_COMPILE=${CROSS_COMPILER_PERFIX} ${IMAGE} -j$(THREADS)
+	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} CROSS_COMPILE=${CROSS_COMPILER_PERFIX} ${LINUX_IMAGE} -j$(THREADS)
 
 gdb-start-in-docker :
 	qemu-system-${TARGET_ARCH}  \
 		-nographic \
-		${MACHINE} \
+		${QEMU_MACHINE} \
 		-smp 4 -m 2G \
-		-device ${HCI} \
+		-device ${QEMU_USB_HCI} \
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
-		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${IMAGE} \
+		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
 		-s -S \
-		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
+		-append "root=/dev/ram console=${LINUX_CONSOLE} init=/linuxrc"
 
 fs-defconfig-in-docker :
 	cd src/${BUSYBOX} && make defconfig && \
@@ -176,21 +189,21 @@ dump-in-docker :
 run-in-docker :
 	qemu-system-${TARGET_ARCH}  \
 		-nographic \
-		${MACHINE} \
+		${QEMU_MACHINE} \
 		-smp 4 -m 2G \
-		-device ${HCI} \
+		-device ${QEMU_USB_HCI} \
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
-		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${IMAGE} \
+		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
-		-append "root=/dev/ram console=${CONSOLE} init=/linuxrc"
+		-append "root=/dev/ram console=${LINUX_CONSOLE} init=/linuxrc"
 
 usbdisk-in-docker:
 	bash scripts/create_usbdisk.sh
 
 gdb-connect-in-docker:
 	gdb-multiarch src/${LINUX_VERSION}/vmlinux -q \
-	-ex "set architecture ${GDBARCH}" \
+	-ex "set architecture ${GDB_ARCH}" \
 	-ex " target remote localhost:1234"
 
 # 在镜像外的操作
@@ -210,113 +223,113 @@ clean-image :
 run :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 menuconfig : defconfig
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} menuconfig-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 defconfig :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} defconfig-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 fs-defconfig :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-defconfig-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 fs-menuconfig : fs-defconfig
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-menuconfig-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 # 这里必须要加 --privileged, 否则挂载文件时会提示无权限。
 rootfs : 
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
 	--privileged \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} rootfs-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 fs-distclean :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-distclean-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 clean :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} clean-in-docker ; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 fs-clean :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} fs-clean-in-docker ; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 image :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
-	--memory-reservation ${MEM} \
+	--name ${DOCKER_CONTAINER} \
+	--memory-reservation ${MEM_LIMIT} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} image-in-docker; \
-	sudo docker rm buildlinux;
+	sudo docker rm ${DOCKER_CONTAINER};
 	
 usbdisk:
 	sudo docker run \
 	--privileged \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
-	--memory-reservation ${MEM} \
+	--name ${DOCKER_CONTAINER} \
+	--memory-reservation ${MEM_LIMIT} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} usbdisk-in-docker; \
-	sudo docker rm buildlinux;
+	sudo docker rm ${DOCKER_CONTAINER};
 
 distclean :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} distclean-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 devel : build-image
 
 dump :
 	sudo docker run \
 	--volume=${PWD}:/workdir:rw \
-	--name buildlinux \
+	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
 	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} dump-in-docker; \
-	sudo docker rm buildlinux
+	sudo docker rm ${DOCKER_CONTAINER}
 
 all : defconfig fs-defconfig rootfs image run
 

@@ -90,7 +90,7 @@ $(info 编译BUSYBOX版本 = ${BUSYBOX});
 # config
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
 # compile and run
-.PHONY += image devel run dump all flush cleanall
+.PHONY += image devel run drun dump all flush dflush cleanall
 # debug
 .PHONY += gdb-start gdb-stop gdb-restart gdb-attch debug
 .PHONY += image-in-docker rootfs-in-docker
@@ -225,8 +225,11 @@ run :
 	--volume=${PWD}:/workdir:rw \
 	--name ${DOCKER_CONTAINER} \
 	-it ${DOCKER_IMAGE} \
-	make TARGET_ARCH=${TARGET_ARCH}  LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
+	make TARGET_ARCH=${TARGET_ARCH} LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
 	sudo docker rm ${DOCKER_CONTAINER}
+
+drun :
+	make TARGET_ARCH=${TARGET_ARCH} LINUX_VERSION=${LINUX_VERSION} run-in-docker;
 
 menuconfig : defconfig
 	sudo docker run \
@@ -336,6 +339,8 @@ all : defconfig fs-defconfig rootfs image run
 cleanall :	distclean fs-distclean
 
 flush : image run
+
+dflush : image drun
 
 gdb-start :
 	sudo docker run \

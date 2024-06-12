@@ -8,6 +8,7 @@ func["run-image"]="运行 docker 镜像"
 func["clean-image"]="删除 docker 镜像"
 #  linux 编译
 func["defconfig"]="构建 linux 默认配置文件"
+func["menuconfig"]="以图形化的方式构建 linux 配置文件"
 func["image"]="构建 linux 镜像"
 #  busybox 编译
 func["fs-defconfig"]="构建 busybox 默认配置文件"
@@ -15,8 +16,11 @@ func["rootfs"]="构建 busybox rootfs"
 # 磁盘生成
 func["usbdisk"]="构建 usb 磁盘"
 # 运行 linux
-func["run"]="运行 linux 镜像"
-func["flush"]="更新 linux 镜像并运行,常用于修改 linux 内核代码后"
+func["run"]="在容器内运行 linux 镜像"
+func["flush"]="更新 linux 镜像并在容器运行,常用于修改 linux 内核代码后"
+func["drun"]="在主机运行 linux 镜像"
+func["dflush"]="更新 linux 镜像并在主机运行,常用于修改 linux 内核代码后"
+
 # 清除所有生成结果
 func["cleanall"]="清除所有生成结果"
 

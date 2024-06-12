@@ -90,13 +90,20 @@ $(info 编译BUSYBOX版本 = ${BUSYBOX});
 # config
 .PHONY += defconfig menuconfig fs-defconfig fs-menuconfig
 # compile and run
-.PHONY += image devel run drun dump all flush dflush cleanall
+.PHONY += image devel dump all cleanall
+# 运行在容器 使用串口 
+.PHONY += run flush
+# 运行在主机 使用串口 
+.PHONY += drun dflush
+# 运行在主机 使用图形化终端
+.PHONY += grun gflush
 # debug
 .PHONY += gdb-start gdb-stop gdb-restart gdb-attch debug
 .PHONY += image-in-docker rootfs-in-docker
+.PHONY += grun-in-docker run-in-docker
 .PHONY += defconfig-in-docker menuconfig-in-docker
 .PHONY += fs-defconfig-in-docker fs-menuconfig-in-docker
-.PHONY += clean-in-docker distclean-in-Docker
+.PHONY += clean-in-docker distclean-in-docker
 .PHONY += gdb-start-in-docker dump-in-docker
 
 defconfig-after-in-docker-x86_64 :
@@ -186,6 +193,7 @@ fs-distclean-in-docker :
 dump-in-docker :
 	objdump -s -d src/${LINUX_VERSION}/vmlinux > dump.s
 
+# 串口运行
 run-in-docker :
 	qemu-system-${TARGET_ARCH}  \
 		-nographic \
@@ -197,6 +205,18 @@ run-in-docker :
 		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
 		-append "root=/dev/ram console=${LINUX_CONSOLE} init=/linuxrc"
+
+# 图形化运行
+grun-in-docker :
+	qemu-system-${TARGET_ARCH}  \
+		${QEMU_MACHINE} \
+		-smp 4 -m 2G \
+		-device ${QEMU_USB_HCI} \
+		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
+		-usb -device usb-storage,drive=my_usb_disk \
+		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
+		-initrd src/${BUSYBOX}/rootfs.img.gz \
+		-append "root=/dev/ram init=/linuxrc"
 
 usbdisk-in-docker:
 	bash scripts/create_usbdisk.sh
@@ -230,6 +250,9 @@ run :
 
 drun :
 	make TARGET_ARCH=${TARGET_ARCH} LINUX_VERSION=${LINUX_VERSION} run-in-docker;
+
+grun :
+	make TARGET_ARCH=${TARGET_ARCH} LINUX_VERSION=${LINUX_VERSION} grun-in-docker;
 
 menuconfig : defconfig
 	sudo docker run \
@@ -341,6 +364,8 @@ cleanall :	distclean fs-distclean
 flush : image run
 
 dflush : image drun
+
+gflush : image grun
 
 gdb-start :
 	sudo docker run \

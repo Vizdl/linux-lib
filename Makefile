@@ -121,6 +121,9 @@ defconfig-after-in-docker-x86_64 :
 
 defconfig-after-in-docker-aarch64 :
 	cd src/${LINUX_VERSION} && \
+	scripts/config --set-val DRM y && \
+	scripts/config --set-val VIRTIO y && \
+	scripts/config --set-val DRM_VIRTIO_GPU y && \
 	scripts/config --enable DEBUG_INFO && \
 	scripts/config --disable USB_OHCI_HCD && \
 	scripts/config --disable USB_UHCI_HCD && \
@@ -143,8 +146,9 @@ fs-defconfig-after-in-docker-aarch64 :
 
 # 在镜像环境内的操作
 defconfig-in-docker :
-	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} defconfig && \
-	cd - && make defconfig-after-in-docker-${TARGET_ARCH}
+	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} defconfig && cd - && \
+	make defconfig-after-in-docker-${TARGET_ARCH} && \
+	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} localmodconfig && cd - 
 
 menuconfig-in-docker :
 	cd src/${LINUX_VERSION} && make menuconfig
@@ -214,9 +218,11 @@ grun-in-docker :
 		-device ${QEMU_USB_HCI} \
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
+		-device usb-kbd \
 		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
 		-initrd src/${BUSYBOX}/rootfs.img.gz \
-		-append "root=/dev/ram init=/linuxrc"
+		-device virtio-gpu -display gtk,gl=on \
+		-append "root=/dev/ram console=tty0 init=/linuxrc"
 
 usbdisk-in-docker:
 	bash scripts/create_usbdisk.sh

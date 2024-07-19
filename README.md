@@ -69,7 +69,7 @@ sudo bash aarch64-4.9.sh run
 ```bash
 poweroff
 ```
-### 8. 错误推出
+### 8. 错误退出
 在卡死时,另起一个终端 :
 ```bash
 ps axu | grep "/bin/sh -c qemu-system-" | sed -n "1, 1p" | awk '{print $2}' | xargs -I {} sudo kill -9 {}

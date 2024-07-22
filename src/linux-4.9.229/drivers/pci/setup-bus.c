@@ -41,6 +41,9 @@ struct pci_dev_resource {
 	unsigned long flags;
 };
 
+/**
+ * free_list - 清空并释放 head 上的 pci_dev_resource
+ */
 static void free_list(struct list_head *head)
 {
 	struct pci_dev_resource *dev_res, *tmp;
@@ -85,6 +88,9 @@ static int add_to_list(struct list_head *head,
 	return 0;
 }
 
+/**
+ * remove_from_list() - 从 head 链表中移除并释放 res 对应的资源
+ */
 static void remove_from_list(struct list_head *head,
 				 struct resource *res)
 {
@@ -1394,8 +1400,14 @@ void __pci_bus_assign_resources(const struct pci_bus *bus,
 	struct pci_bus *b;
 	struct pci_dev *dev;
 
+	/**
+	 * 对齐 pci bus 的资源
+	 */
 	pbus_assign_resources_sorted(bus, realloc_head, fail_head);
 
+	/**
+	 * 遍历 pci bus 下所有 pci dev,对齐 pci dev 的资源
+	 */
 	list_for_each_entry(dev, &bus->devices, bus_list) {
 		pdev_assign_fixed_resources(dev);
 

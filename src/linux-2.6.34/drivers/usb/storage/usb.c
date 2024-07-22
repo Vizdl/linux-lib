@@ -710,6 +710,7 @@ static int usb_stor_acquire_resources(struct us_data *us)
 		return -ENOMEM;
 	}
 
+	storage_info("initFunction = %p\n", us->unusual_dev->initFunction);
 	/* Just before we start our control thread, initialize
 	 * the device if it needs initialization */
 	if (us->unusual_dev->initFunction) {
@@ -825,7 +826,7 @@ static int usb_stor_scan_thread(void * __us)
 	set_freezable();
 	/* Wait for the timeout to expire or for a disconnect */
 	if (delay_use > 0) {
-		dev_dbg(&us->pusb_intf->dev, "waiting for device to settle "
+		dev_info(&us->pusb_intf->dev, "waiting for device to settle "
 				"before scanning\n");
 		wait_event_freezable_timeout(us->delay_wait,
 				test_bit(US_FLIDX_DONT_SCAN, &us->dflags),

@@ -255,6 +255,7 @@ static int __pci_assign_resource(struct pci_bus *bus, struct pci_dev *dev,
 				     pcibios_align_resource, dev);
 	if (ret == 0)
 		return 0;
+	dump_resource("bar", res);
 
 	/*
 	 * If the prefetchable window is only 32 bits wide, we can put
@@ -307,6 +308,8 @@ int pci_assign_resource(struct pci_dev *dev, int resno)
 	if (res->flags & IORESOURCE_PCI_FIXED)
 		return 0;
 
+	dev_info(&dev->dev, "BAR %d: assigned %pR\n", resno, res);
+	dump_resource("bar", res);
 	res->flags |= IORESOURCE_UNSET;
 	align = pci_resource_alignment(dev, res);
 	if (!align) {
@@ -337,6 +340,7 @@ int pci_assign_resource(struct pci_dev *dev, int resno)
 	res->flags &= ~IORESOURCE_UNSET;
 	res->flags &= ~IORESOURCE_STARTALIGN;
 	dev_info(&dev->dev, "BAR %d: assigned %pR\n", resno, res);
+	dump_resource("bar", res);
 	if (resno < PCI_BRIDGE_RESOURCES)
 		pci_update_resource(dev, resno);
 

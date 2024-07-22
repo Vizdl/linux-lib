@@ -352,6 +352,9 @@ int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 	if (ret)
 		return ret;
 
+	/**
+	 * 遍历每个条目去设置 irqs
+	 */
 	for_each_msi_entry(desc, dev) {
 		ops->set_desc(&arg, desc);
 

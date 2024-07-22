@@ -36,6 +36,8 @@ static void pdev_fixup_irq(struct pci_dev *dev,
 	   apply the swizzle function.  */
 
 	pci_read_config_byte(dev, PCI_INTERRUPT_PIN, &pin);
+	// printk("\n%s :\n", __func__);
+	dl_pci_info("fixup %s irq, pin = %d\n", dev_name(&dev->dev), pin);
 	/* Cope with illegal. */
 	if (pin > 4)
 		pin = 1;
@@ -50,13 +52,16 @@ static void pdev_fixup_irq(struct pci_dev *dev,
 	}
 	dev->irq = irq;
 
-	dev_dbg(&dev->dev, "fixup irq: got %d\n", dev->irq);
-	dl_pci_info("fixup %s irq: got %d\n", dev_name(&dev->dev), dev->irq);
+	dev_dbg(&dev->dev, "fixup irq: got 0x%x\n", dev->irq);
+	dl_pci_info("fixup %s irq: got 0x%x\n", dev_name(&dev->dev), dev->irq);
 	/* Always tell the device, so the driver knows what is
 	   the real IRQ to use; the device does not use it. */
 	pcibios_update_irq(dev, irq);
 }
 
+/**
+ * pci_fixup_irqs - 修复 intx irqs
+ */
 void pci_fixup_irqs(u8 (*swizzle)(struct pci_dev *, u8 *),
 		    int (*map_irq)(const struct pci_dev *, u8, u8))
 {

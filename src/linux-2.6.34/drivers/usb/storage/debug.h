@@ -50,7 +50,10 @@
 void usb_stor_show_command(struct scsi_cmnd *srb);
 void usb_stor_show_sense( unsigned char key,
 		unsigned char asc, unsigned char ascq );
-#define US_DEBUGP(x...) printk( KERN_DEBUG USB_STORAGE x )
+#define US_DEBUGP(fmt, ...) \
+	do {					\
+		printk("usb-storage[%s]: "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
 #define US_DEBUGPX(x...) printk( x )
 #define US_DEBUG(x) x 
 #else
@@ -62,5 +65,20 @@ void usb_stor_show_sense( unsigned char key,
 #define US_DEBUGPX(x...)
 #define US_DEBUG(x)
 #endif
+
+#define STORAGE_INFO 1
+#define STORAGE_DEBUG 0
+
+#define storage_info(fmt, ...) \
+	do {					\
+		if (STORAGE_INFO) \
+			printk("storage-info[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
+
+#define storage_dbg(fmt, ...) \
+	do {					\
+		if (STORAGE_DEBUG) \
+			printk("storage-dbg[%s] : "fmt, __func__, ##__VA_ARGS__);	\
+	} while(0)
 
 #endif

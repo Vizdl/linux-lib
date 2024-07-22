@@ -41,9 +41,12 @@ EXPORT_SYMBOL(pci_add_resource);
 
 void dump_resource(const char* text, struct resource *res)
 {
-	printk("%s : %s, %lx, %llx, %llx\n", 
-		text, res->name != NULL ? res->name : "NULL", 
-		res->flags, res->start, res->end
+	// printk("%s : %s, %lx, %llx, %llx\n", 
+	// 	text, res->name != NULL ? res->name : "NULL", 
+	// 	res->flags, res->start, res->end
+	// );
+	printk("%s : %lx, %llx, %llx\n", 
+		text, res->flags, res->start, res->end
 	);
 }
 EXPORT_SYMBOL(dump_resource);
@@ -110,6 +113,9 @@ void pci_bus_remove_resources(struct pci_bus *bus)
 	}
 }
 
+/**
+ * devm_request_pci_bus_resources - 设备请求多个资源,防止资源冲突
+ */
 int devm_request_pci_bus_resources(struct device *dev,
 				   struct list_head *resources)
 {

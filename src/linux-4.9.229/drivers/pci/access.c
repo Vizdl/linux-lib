@@ -94,6 +94,7 @@ int pci_generic_config_write(struct pci_bus *bus, unsigned int devfn,
 {
 	void __iomem *addr;
 
+	// printk("%s : bus=%s, devfn=%u, where=%d, val=%u\n", __func__, dev_name(&bus->dev), devfn, where, val);
 	addr = bus->ops->map_bus(bus, devfn, where);
 	if (!addr)
 		return PCIBIOS_DEVICE_NOT_FOUND;

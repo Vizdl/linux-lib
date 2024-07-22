@@ -232,6 +232,11 @@ u32 __pci_msix_desc_mask_irq(struct msi_desc *desc, u32 flag)
 	mask_bits &= ~PCI_MSIX_ENTRY_CTRL_MASKBIT;
 	if (flag & PCI_MSIX_ENTRY_CTRL_MASKBIT)
 		mask_bits |= PCI_MSIX_ENTRY_CTRL_MASKBIT;
+
+	printk("%s : base + PCI_MSIX_ENTRY_VECTOR_CTRL(0x%p) = 0x%x\n", 
+		__func__, pci_msix_desc_addr(desc) + PCI_MSIX_ENTRY_VECTOR_CTRL,
+		mask_bits
+	);
 	writel(mask_bits, pci_msix_desc_addr(desc) + PCI_MSIX_ENTRY_VECTOR_CTRL);
 
 	return mask_bits;
@@ -283,6 +288,11 @@ void default_restore_msi_irqs(struct pci_dev *dev)
 		default_restore_msi_irq(dev, entry->irq);
 }
 
+/**
+ * __pci_read_msi_msg - 从 msi 中读取信息
+ * @entry: msi 设备
+ * @msg: 读缓存
+ */
 void __pci_read_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
 {
 	struct pci_dev *dev = msi_desc_to_pci_dev(entry);
@@ -313,17 +323,34 @@ void __pci_read_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
 	}
 }
 
+/**
+ * __pci_write_msi_msg - 向 msi 中写信息
+ * @entry: msi 设备
+ * @msg: 写缓存
+ */
 void __pci_write_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
 {
 	struct pci_dev *dev = msi_desc_to_pci_dev(entry);
 
+	// printk("\n\n __pci_write_msi_msg : msi = %p, msg = [%x,%x,%x]\n", 
+	// 	entry, msg->address_lo, msg->address_hi, msg->data
+	// );
 	if (dev->current_state != PCI_D0) {
 		/* Don't touch the hardware now */
 	} else if (entry->msi_attrib.is_msix) {
 		void __iomem *base = pci_msix_desc_addr(entry);
-
+		
+		printk("base + PCI_MSIX_ENTRY_LOWER_ADDR(0x%p) = 0x%x\n", 
+			base + PCI_MSIX_ENTRY_LOWER_ADDR, msg->address_lo
+		);
 		writel(msg->address_lo, base + PCI_MSIX_ENTRY_LOWER_ADDR);
+		printk("base + PCI_MSIX_ENTRY_UPPER_ADDR(0x%p) = 0x%x\n", 
+			base + PCI_MSIX_ENTRY_UPPER_ADDR, msg->address_hi
+		);
 		writel(msg->address_hi, base + PCI_MSIX_ENTRY_UPPER_ADDR);
+		printk("base + PCI_MSIX_ENTRY_DATA(0x%p) = 0x%x\n", 
+			base + PCI_MSIX_ENTRY_DATA, msg->data
+		);
 		writel(msg->data, base + PCI_MSIX_ENTRY_DATA);
 	} else {
 		int pos = dev->msi_cap;
@@ -675,16 +702,22 @@ static void __iomem *msix_map_region(struct pci_dev *dev, unsigned nr_entries)
 	unsigned long flags;
 	u8 bir;
 
+	// printk("\n%s :\n", __func__);
+	dev_info(&dev->dev, "dev->msix_cap = %d\n", dev->msix_cap);
 	pci_read_config_dword(dev, dev->msix_cap + PCI_MSIX_TABLE,
 			      &table_offset);
 	bir = (u8)(table_offset & PCI_MSIX_TABLE_BIR);
+	dev_info(&dev->dev, "pci resource start = %llx, table_offset = %d, bir = %d \n", 
+	pci_resource_start(dev, bir), table_offset, bir);
 	flags = pci_resource_flags(dev, bir);
+	dev_info(&dev->dev, "flags = %lx \n", flags);
 	if (!flags || (flags & IORESOURCE_UNSET))
 		return NULL;
 
 	table_offset &= PCI_MSIX_TABLE_OFFSET;
 	phys_addr = pci_resource_start(dev, bir) + table_offset;
 
+	dev_info(&dev->dev, "phys_addr = 0x%llx, len = 0x%x\n\n", phys_addr, nr_entries * PCI_MSIX_ENTRY_SIZE);
 	return ioremap_nocache(phys_addr, nr_entries * PCI_MSIX_ENTRY_SIZE);
 }
 
@@ -738,7 +771,7 @@ static void msix_program_entries(struct pci_dev *dev,
 {
 	struct msi_desc *entry;
 	int i = 0;
-
+	// printk("\n%s :\n", __func__);
 	for_each_pci_msi_entry(entry, dev) {
 		if (entries)
 			entries[i++].vector = entry->irq;
@@ -965,6 +998,7 @@ static int __pci_enable_msix(struct pci_dev *dev, struct msix_entry *entries,
 		return -EINVAL;
 
 	nr_entries = pci_msix_vec_count(dev);
+	printk("%s : nr_entries = %d, nvec = %d\n", __func__, nr_entries, nvec);
 	if (nr_entries < 0)
 		return nr_entries;
 	if (nvec > nr_entries)
@@ -1332,6 +1366,9 @@ void pci_msi_domain_write_msg(struct irq_data *irq_data, struct msi_msg *msg)
 {
 	struct msi_desc *desc = irq_data_get_msi_desc(irq_data);
 
+	// printk("\n\n pci_msi_domain_write_msg : data = %p, msi = %p, irq = %x, hwirq = %lx, msg = [%x,%x,%x]\n", 
+	// 	irq_data, desc, irq_data->irq, irq_data->hwirq, msg->address_lo, msg->address_hi, msg->data
+	// );
 	/*
 	 * For MSI-X desc->irq is always equal to irq_data->irq. For
 	 * MSI only the first interrupt of MULTI MSI passes the test.

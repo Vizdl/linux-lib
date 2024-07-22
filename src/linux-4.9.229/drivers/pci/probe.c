@@ -317,6 +317,12 @@ out:
 	return (res->flags & IORESOURCE_MEM_64) ? 1 : 0;
 }
 
+/**
+ * pci_read_bases - 获取 pci dev 的资源
+ * @dev: pci device
+ * @howmany: 需要读取的数量
+ * @rom: 是否读取只读资源 
+ */
 static void pci_read_bases(struct pci_dev *dev, unsigned int howmany, int rom)
 {
 	unsigned int pos, reg;
@@ -328,6 +334,7 @@ static void pci_read_bases(struct pci_dev *dev, unsigned int howmany, int rom)
 		struct resource *res = &dev->resource[pos];
 		reg = PCI_BASE_ADDRESS_0 + (pos << 2);
 		pos += __pci_read_base(dev, pci_bar_unknown, res, reg);
+		// dev_info(&dev->dev, "read bases = %pR\n", res);
 	}
 
 	if (rom) {
@@ -336,6 +343,7 @@ static void pci_read_bases(struct pci_dev *dev, unsigned int howmany, int rom)
 		res->flags = IORESOURCE_MEM | IORESOURCE_PREFETCH |
 				IORESOURCE_READONLY | IORESOURCE_SIZEALIGN;
 		__pci_read_base(dev, pci_bar_mem32, res, rom);
+		// dev_info(&dev->dev, "read rom bases = %pR\n", res);
 	}
 }
 
@@ -1856,7 +1864,7 @@ void pci_device_add(struct pci_dev *dev, struct pci_bus *bus)
 
 	/* Notifier could use PCI capabilities */
 	dev->match_driver = false;
-	dl_pci_info("device_add, dev = %s, pci->irq = %d\n", dev_name(&dev->dev), dev->irq);
+	dl_pci_info("dev = %s, pci->irq = %d\n", dev_name(&dev->dev), dev->irq);
 	ret = device_add(&dev->dev);
 	WARN_ON(ret < 0);
 }
@@ -2249,6 +2257,9 @@ struct pci_bus *pci_create_root_bus(struct device *parent, int bus,
 	}
 	b->bridge = get_device(&bridge->dev);
 	device_enable_async_suspend(b->bridge);
+	/**
+	 * 这里 root bus 实际上用的是 bus->bridge->parent->of_node
+	 */
 	pci_set_bus_of_node(b);
 	pci_set_bus_msi_domain(b);
 

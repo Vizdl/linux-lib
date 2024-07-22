@@ -735,7 +735,11 @@ static void get_protocol(struct us_data *us)
 	}
 }
 
-/* Get the pipe settings */
+/**
+ * get_pipes - 获取 pipe
+ * @us: usb 存储传输上下文
+ * @return: 返回0表示获取成功,否则失败。
+ */
 static int get_pipes(struct us_data *us)
 {
 	struct usb_host_interface *altsetting =
@@ -968,8 +972,8 @@ int usb_stor_probe1(struct us_data **pus,
 	dev_info(&intf->dev, "USB Mass Storage device detected\n");
 
 	/*
-	 * Ask the SCSI layer to allocate a host structure, with extra
-	 * space at the end for our private us_data structure.
+	 * 请求SCSI层分配一个 scsi host 结构
+	 * 并在末尾为我们的私有 us_data 结构分配额外的空间。
 	 */
 	host = scsi_host_alloc(sht, sizeof(*us));
 	if (!host) {
@@ -977,7 +981,8 @@ int usb_stor_probe1(struct us_data **pus,
 		return -ENOMEM;
 	}
 
-	/*
+	/**
+	 * 初始化 scsi host 和 us_data
 	 * Allow 16-byte CDBs and thus > 2TB
 	 */
 	host->max_cmd_len = 16;

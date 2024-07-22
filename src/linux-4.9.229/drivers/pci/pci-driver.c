@@ -400,7 +400,12 @@ static int pci_device_probe(struct device *dev)
 	int error;
 	struct pci_dev *pci_dev = to_pci_dev(dev);
 	struct pci_driver *drv = to_pci_driver(dev->driver);
-
+	/**
+	 * 实际上在 setup-irq.c 中就已经 pdev_fixup_irq 就已解析出了 hard irq
+	 * 并将 hard irq 进行注册生成了 virq, 当前 pci_dev->irq 便是。
+	 * 在 aarch64 qemu 的 pcibios_alloc_irq 实现中会再次做解析，
+	 * 但不会产生中断号的改变
+	 */
 	error = pcibios_alloc_irq(pci_dev);
 	if (error < 0)
 		return error;

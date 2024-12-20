@@ -1,5 +1,5 @@
 # 这里必须是 18.04 版本,否则 ld 版本过低无法链接...
-FROM ubuntu:18.04
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/ubuntu:18.04
 MAINTAINER author "dinglei@kernelsoft.com"
 # 更换源操作,目前无其他合适的国内源,更换后会导致失败。
 # COPY sources.list /etc/apt/

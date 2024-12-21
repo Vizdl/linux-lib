@@ -1723,11 +1723,11 @@ static int do_execveat_common(int fd, struct filename *filename,
 	/* We're below the limit (still or again), so we don't want to make
 	 * further execve() calls fail. */
 	current->flags &= ~PF_NPROC_EXCEEDED;
-
+	// 调用 nshare_files() 为进程复制一份文件表
 	retval = unshare_files(&displaced);
 	if (retval)
 		goto out_ret;
-
+	// 调用 kzalloc() 分配一份 struct linux_binprm 结构体
 	retval = -ENOMEM;
 	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);
 	if (!bprm)
@@ -1739,14 +1739,14 @@ static int do_execveat_common(int fd, struct filename *filename,
 
 	check_unsafe_exec(bprm);
 	current->in_execve = 1;
-
+	// 调用 do_open_execat() 查找并打开二进制文件
 	file = do_open_execat(fd, filename, flags);
 	retval = PTR_ERR(file);
 	if (IS_ERR(file))
 		goto out_unmark;
-
+	// 调用sched_exec()找到最小负载的CPU，用来执行该二进制文件
 	sched_exec();
-
+	// 根据获取的信息，填充structlinux_binprm结构体中的file、filename、interp成员
 	bprm->file = file;
 	if (fd == AT_FDCWD || filename->name[0] == '/') {
 		bprm->filename = filename->name;
@@ -1770,11 +1770,11 @@ static int do_execveat_common(int fd, struct filename *filename,
 		bprm->filename = pathbuf;
 	}
 	bprm->interp = bprm->filename;
-
+	// 调用 bprm_mm_init() 创建进程的内存地址空间，为新程序初始化内存管理.并调用 init_new_context() 检查当前进程是否使用自定义的局部描述符表；如果是，那么分配和准备一个新的LDT
 	retval = bprm_mm_init(bprm);
 	if (retval)
 		goto out_unmark;
-
+	// 填充 struct linux_binprm 结构体中的 argc、envc 成员
 	bprm->argc = count(argv, MAX_ARG_STRINGS);
 	if ((retval = bprm->argc) < 0)
 		goto out;
@@ -1782,15 +1782,15 @@ static int do_execveat_common(int fd, struct filename *filename,
 	bprm->envc = count(envp, MAX_ARG_STRINGS);
 	if ((retval = bprm->envc) < 0)
 		goto out;
-
+	// 调用prepare_binprm()检查该二进制文件的可执行权限；最后，kernel_read()读取二进制文件的头128字节（这些字节用于识别二进制文件的格式及其他信息，后续会使用到）
 	retval = prepare_binprm(bprm);
 	if (retval < 0)
 		goto out;
-
+	// 调用copy_strings_kernel()从内核空间获取二进制文件的路径名称
 	retval = copy_strings_kernel(1, &bprm->filename, bprm);
 	if (retval < 0)
 		goto out;
-
+	// 调用copy_string()从用户空间拷贝环境变量和命令行参数
 	bprm->exec = bprm->p;
 	retval = copy_strings(bprm->envc, envp, bprm);
 	if (retval < 0)
@@ -1799,11 +1799,17 @@ static int do_execveat_common(int fd, struct filename *filename,
 	retval = copy_strings(bprm->argc, argv, bprm);
 	if (retval < 0)
 		goto out;
-
+	/** 
+	 * 至此，二进制文件已经被打开，struct linux_binprm结构体中也记录了重要信息, 内核开始调用 exec_binprm 执行可执行程序
+	 * 通过 bprm 加载并执行 elf 文件
+	 * 执行完该函数后,会修改当前进程的 regs
+	 * 以保证回到用户态后,会修改 pc 跳转到
+	 * exec file 对应的函数入口 _start; 
+	 */
 	retval = exec_binprm(bprm);
 	if (retval < 0)
 		goto out;
-
+	// 释放 linux_binprm 数据结构，返回从该文件可执行格式的 load_binary 中获得的代码
 	/* execve succeeded */
 	current->fs->in_exec = 0;
 	current->in_execve = 0;

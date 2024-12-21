@@ -228,6 +228,7 @@ typedef struct elf64_hdr {
   Elf64_Word e_flags;
   Elf64_Half e_ehsize;
   Elf64_Half e_phentsize;
+  /* e_phnumc 存储了程序头表的数目 */
   Elf64_Half e_phnum;
   Elf64_Half e_shentsize;
   Elf64_Half e_shnum;
@@ -252,11 +253,20 @@ typedef struct elf32_phdr{
 } Elf32_Phdr;
 
 typedef struct elf64_phdr {
+  /**
+   * Segment 的类型, 例如 : PT_LOAD
+   */
   Elf64_Word p_type;
   Elf64_Word p_flags;
+  /**
+   * Segment 的开始地址, 该地址是相对文件的偏移
+   */
   Elf64_Off p_offset;		/* Segment file offset */
   Elf64_Addr p_vaddr;		/* Segment virtual address */
   Elf64_Addr p_paddr;		/* Segment physical address */
+  /**
+   * Segment 的大小
+   */
   Elf64_Xword p_filesz;		/* Segment size in file */
   Elf64_Xword p_memsz;		/* Segment size in memory */
   Elf64_Xword p_align;		/* Segment alignment, file & memory */

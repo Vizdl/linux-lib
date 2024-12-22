@@ -669,7 +669,9 @@ static int load_elf_binary(struct linux_binprm *bprm)
 {
 	struct file *interpreter = NULL; /* to shut gcc up */
  	unsigned long load_addr = 0, load_bias = 0;
+	/* 如若 ELF 是 ET_DYN 类型才有意义, 表示是否完成加载地址计算 */
 	int load_addr_set = 0;
+	/* 解释器路径 */
 	char * elf_interpreter = NULL;
 	unsigned long error;
 	struct elf_phdr *elf_ppnt, *elf_phdata, *interp_elf_phdata = NULL;
@@ -975,8 +977,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		/*
 		 * If we are loading ET_EXEC or we have already performed
 		 * the ET_DYN load_addr calculations, proceed normally.
-		 * 如若是可执行文件或 ?? 直接没有其他偏移量
-		 * 如若是共享目标文件,需要考虑重定向的问题？
+		 * 如果我们正在加载 ET_EXEC 类型的文件，或者已经完成了 ET_DYN 类型的加载地址计算，则正常进行。
 		 */
 		if (loc->elf_ex.e_type == ET_EXEC || load_addr_set) {
 			elf_flags |= MAP_FIXED;
@@ -1013,18 +1014,18 @@ static int load_elf_binary(struct linux_binprm *bprm)
 			 */
 			/**
 			 * 这个逻辑在处理 ET_DYN 格式二进制文件的第一个 LOAD 程序头时运行，
-			 * 计算所有 LOAD 程序头的随机化值（load_bias），并计算 ELF 映射的整体大小（total_size）。
+			 * 计算所有 LOAD 程序头的随机化值(load_bias)，并计算 ELF 映射的整体大小（total_size）。
 			 * （注意：一旦初始映射完成，load_addr_set 会在稍后被设置为 true。）
 			 *
-			 * 实际上，ET_DYN 二进制文件有两种类型：程序（即 PIE：带有 INTERP 的 ET_DYN）和加载器（没有 INTERP 的 ET_DYN，
-			 * 因为它们就是 ELF 解释器）。加载器必须与程序分开加载，因为程序可能会与加载器发生冲突（尤其是对于没有随机化位置的 ET_EXEC）。
+			 * 实际上，ET_DYN 二进制文件有两种类型：
+			 * 1. 程序（即 PIE：带有 INTERP 的 ET_DYN）
+			 * 2. 加载器（没有 INTERP 的 ET_DYN，因为它们就是 ELF 解释器）。
+			 * 加载器必须与程序分开加载，因为程序可能会与加载器发生冲突（尤其是对于没有随机化位置的 ET_EXEC）。
 			 * 例如，为了处理 "./ld.so someprog" 这样的命令来测试新版本的加载器，加载器加载的后续程序必须避免与加载器本身冲突，
 			 * 因此它们不能共享相同的加载范围。同时，加载器必须为 brk 分配足够的空间，因为 brk 必须与加载器一起可用。
 			 *
-			 * 因此，程序被加载到 ELF_ET_DYN_BASE 偏移的位置，而加载器则被加载到独立随机化的 mmap 区域（0 load_bias，
-			 * 且没有 MAP_FIXED 标志）。
+			 * 因此，程序被加载到 ELF_ET_DYN_BASE 偏移的位置，而加载器则被加载到独立随机化的 mmap 区域（0 load_bias 且没有 MAP_FIXED 标志）。
 			 */
-
 			if (elf_interpreter) {
 				load_bias = ELF_ET_DYN_BASE;
 				if (current->flags & PF_RANDOMIZE)
@@ -1039,6 +1040,12 @@ static int load_elf_binary(struct linux_binprm *bprm)
 			 * so that the remaining calculations based on the
 			 * ELF vaddrs will be correctly offset. The result
 			 * is then page aligned.
+			 */
+			/** 
+			 * 由于 load_bias 被用于所有后续的加载计算，
+			 * 我们必须将其减去第一个虚拟地址 (vaddr)，
+			 * 以确保基于 ELF 虚拟地址的剩余计算能够正确地进行偏移。
+			 * 结果随后会进行页面对齐。
 			 */
 			load_bias = ELF_PAGESTART(load_bias - vaddr);
 			/**
@@ -1059,8 +1066,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		 * 因为mm是刚初始化的，所以会直接加载到load_bias + vaddr。
 		 */
 		/*  5.3  虚拟地址空间与目标映像文件的映射
-         确定了装入地址后，
-         就通过elf_map()建立用户空间虚拟地址空间
+         确定了装入地址后，就通过elf_map()建立用户空间虚拟地址空间
          与目标映像文件中某个连续区间之间的映射，
          其返回值就是实际映射的起始地址 */
 		error = elf_map(bprm->file, load_bias + vaddr, elf_ppnt,
@@ -1146,7 +1152,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	}
 
 	/**
-	 * 加载解释器，将其LOAD段通过mmap加载到用户空间，并将程序的入口地址设置为新的入口地址（根据load_elf_interp的返回值）。
+	 * 加载解释器，将其 LOAD 段通过 mmap 加载到用户空间，并将程序的入口地址设置为新的入口地址（根据load_elf_interp的返回值）。
 	 */
 	/**
 	 * 6  填写程序的入口地址

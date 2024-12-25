@@ -15,6 +15,8 @@ LINUX_VERSION ?= linux-4.9.229
 DOCKER_IMAGE = linux-lib-${TARGET_ARCH}-${LINUX_VERSION}:latest
 # docker 容器名
 DOCKER_CONTAINER = linux-lib-${TARGET_ARCH}-${LINUX_VERSION}
+# GCC 依赖库
+GCCLIB_PATH = /lib/x86_64-linux-gnu
 
 # 环境检测
 ## 1. 编译主机必须是 x64 体系结构
@@ -56,8 +58,10 @@ CROSS_COMPILER_PERFIX ?=
 ifneq ("$(HOST_ARCH)", "$(TARGET_ARCH)")
 	ifeq ("$(LINUX_VERSION)", "linux-3.12")
 		CROSS_COMPILER_PERFIX = /opt/gcc-linaro-4.9-2016.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+		GCCLIB_PATH = /opt/gcc-linaro-4.9-2016.02-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/lib
 	else ifeq ("$(LINUX_VERSION)", "linux-4.9.229")
 		CROSS_COMPILER_PERFIX = /opt/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+		GCCLIB_PATH = /opt/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/lib
 	else
 		$(error "does not support $(LINUX_VERSION) !!!");
 	endif
@@ -137,11 +141,10 @@ defconfig-after-in-docker-aarch64 :
 	scripts/config --disable ARM64_UAO
 
 fs-defconfig-after-in-docker-x86_64 :
-	cd src/${BUSYBOX} && scripts/config --enable STATIC
+	cd src/${BUSYBOX}
 
 fs-defconfig-after-in-docker-aarch64 :
 	cd src/${BUSYBOX} && \
-	scripts/config --enable STATIC && \
 	scripts/config --set-str CROSS_COMPILER_PREFIX "${CROSS_COMPILER_PERFIX}"
 
 # 在镜像环境内的操作
@@ -186,7 +189,7 @@ fs-clean-in-docker :
 	cd src/${BUSYBOX} && make clean
 
 rootfs-in-docker :
-	cd src/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs.sh
+	cd src/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs-${LINUX_ARCH}.sh ${GCCLIB_PATH}
 
 fs-distclean-in-docker :
 	cd src/${BUSYBOX} && make distclean \
@@ -372,6 +375,8 @@ flush : image run
 dflush : image drun
 
 gflush : image grun
+
+fs-flush : fs-distclean fs-defconfig rootfs run
 
 gdb-start :
 	sudo docker run \

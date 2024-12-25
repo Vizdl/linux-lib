@@ -1,5 +1,5 @@
 # 这里 glibc 版本要低,所以只能用 14.04
-FROM ubuntu:14.04
+FROM ubuntu:18.04
 MAINTAINER author "dinglei@kernelsoft.com"
 # 更换源操作,目前无其他合适的国内源,更换后会导致失败。
 # COPY sources.list /etc/apt/

@@ -1742,6 +1742,8 @@ static int do_execveat_common(int fd, struct filename *filename,
 	// 调用 do_open_execat() 查找并打开二进制文件
 	file = do_open_execat(fd, filename, flags);
 	retval = PTR_ERR(file);
+	// printk("dl-debug[%s] : filename = %s, call do_open_execat retval = %d, file = %p, IS_ERR(file) = %d\n",
+	//  __func__, filename->name, retval, file, IS_ERR(file));
 	if (IS_ERR(file))
 		goto out_unmark;
 	// 调用sched_exec()找到最小负载的CPU，用来执行该二进制文件
@@ -1807,6 +1809,8 @@ static int do_execveat_common(int fd, struct filename *filename,
 	 * exec file 对应的函数入口 _start; 
 	 */
 	retval = exec_binprm(bprm);
+	// printk("dl-debug[%s] :  filename = %s, call exec_binprm retval = %d\n",
+	//  __func__, filename->name, retval);
 	if (retval < 0)
 		goto out;
 	// 释放 linux_binprm 数据结构，返回从该文件可执行格式的 load_binary 中获得的代码

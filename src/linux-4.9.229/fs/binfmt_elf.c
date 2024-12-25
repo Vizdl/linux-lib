@@ -780,6 +780,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
 
 			interpreter = open_exec(elf_interpreter);
 			retval = PTR_ERR(interpreter);
+			// printk("dl-debug[%s] : filename = %s, retval = %d, IS_ERR(interpreter) = %d\n",
+			// __func__, elf_interpreter, retval, IS_ERR(interpreter));
 			if (IS_ERR(interpreter))
 				goto out_free_interp;
 
@@ -829,7 +831,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	 */
 	/* Some simple consistency checks for the interpreter */
 	if (elf_interpreter) {
-		printk("dl-debug : elf_interpreter = %s\n", elf_interpreter);
+		// printk("dl-debug : elf_interpreter = %s\n", elf_interpreter);
 		retval = -ELIBBAD;
 		/* Not an ELF interpreter */
 		if (memcmp(loc->interp_elf_ex.e_ident, ELFMAG, SELFMAG) != 0)

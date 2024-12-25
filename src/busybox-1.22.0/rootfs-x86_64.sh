@@ -1,6 +1,8 @@
 #!/bin/bash
+LIB_PATH=$1
+
 cd _install
-mkdir etc dev mnt && mkdir -p proc sys tmp mnt && mkdir -p etc/init.d/
+mkdir etc dev proc sys tmp mnt && mkdir -p etc/init.d/
 mknod dev/console c 5 1 && mknod dev/null c 1 3 && mknod dev/tty1 c 4 1
 touch etc/fstab etc/init.d/rcS etc/inittab && chmod 755 etc -R
 
@@ -34,6 +36,12 @@ dd if=/dev/zero of=./rootfs.ext3 bs=1M count=32 && \
 mkfs.ext3 rootfs.ext3 && \
 mkdir fs && \
 mount -o loop rootfs.ext3 ./fs && \
+mkdir ./fs/lib && \
+mkdir ./fs/lib64 && \
+cp -Lvr ${LIB_PATH}/ld-linux-x86-64.so.2 ./fs/lib64 && \
+cp -Lvr ${LIB_PATH}/libc.so.6 ./fs/lib && \
+cp -Lvr ${LIB_PATH}/libresolv.so.2 ./fs/lib && \
+cp -Lvr ${LIB_PATH}/libm.so.6 ./fs/lib && \
 cp -rf ./_install/* ./fs && \
 umount ./fs && \
 gzip --best -c rootfs.ext3 > rootfs.img.gz 

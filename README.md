@@ -72,11 +72,11 @@ poweroff
 ### 8. 错误退出
 在卡死时,另起一个终端 :
 ```bash
-ps axu | grep "/bin/sh -c qemu-system-" | sed -n "1, 1p" | awk '{print $2}' | xargs -I {} sudo kill -9 {}
+sudo bash aarch64-4.9.sh stop
 ```
 或者
 ```bash
-sudo docker stop buildlinux
+ps axu | grep "/bin/sh -c qemu-system-" | sed -n "1, 1p" | awk '{print $2}' | xargs -I {} sudo kill -9 {}
 ```
 ## 推荐书籍
 推荐书籍清单PDF请点击[链接](https://gitee.com/Vizdl/os-books.git)。支持正版,PDF仅供学习使用,有能力的朋友买实体书多多支持一下。

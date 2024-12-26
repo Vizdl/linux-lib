@@ -23,7 +23,7 @@ func["flush"]="更新 linux 镜像并在容器运行,常用于修改 linux 内�
 func["fs-flush"]="更新 rootfs 并在容器运行,常用于修改 rootfs 之后"
 func["dflush"]="更新 linux 镜像并在主机运行,常用于修改 linux 内核代码后"
 func["gflush"]="更新 linux 镜像并在主机使用图形化界面运行,常用于修改 linux 内核代码后"
-
+func["stop"]="停止在容器内运行 linux 镜像"
 # 清除所有生成结果
 func["fs-distclean"]="清除busybox生成结果"
 func["cleanall"]="清除所有生成结果"

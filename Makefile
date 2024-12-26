@@ -257,6 +257,9 @@ run :
 	make TARGET_ARCH=${TARGET_ARCH} LINUX_VERSION=${LINUX_VERSION} run-in-docker; \
 	sudo docker rm ${DOCKER_CONTAINER}
 
+stop :
+	sudo docker stop ${DOCKER_CONTAINER}
+
 drun :
 	make TARGET_ARCH=${TARGET_ARCH} LINUX_VERSION=${LINUX_VERSION} run-in-docker;
 

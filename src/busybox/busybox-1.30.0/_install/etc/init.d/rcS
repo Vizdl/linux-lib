@@ -1,0 +1,8 @@
+echo -e "Welcome to tinyLinux"
+/bin/mount -a
+echo -e "Remounting the root filesystem"
+mount  -o  remount,rw  /
+mkdir -p /dev/pts
+mount -t devpts devpts /dev/pts
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s

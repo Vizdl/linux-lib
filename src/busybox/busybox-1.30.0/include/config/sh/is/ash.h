@@ -1,0 +1,1 @@
+#define CONFIG_SH_IS_ASH 1

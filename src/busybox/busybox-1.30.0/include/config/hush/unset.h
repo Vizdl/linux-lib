@@ -1,0 +1,1 @@
+#define CONFIG_HUSH_UNSET 1

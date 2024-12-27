@@ -1,0 +1,81 @@
+# DO NOT EDIT. This file is generated from Kbuild.src
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+lib-y:=
+
+lib-$(CONFIG_ACPID) += acpid.o
+lib-$(CONFIG_BLKDISCARD) += blkdiscard.o
+lib-$(CONFIG_BLKID) += blkid.o
+lib-$(CONFIG_BLOCKDEV) += blockdev.o
+lib-$(CONFIG_CAL) += cal.o
+lib-$(CONFIG_CHRT) += chrt.o
+lib-$(CONFIG_DMESG) += dmesg.o
+lib-$(CONFIG_EJECT) += eject.o
+lib-$(CONFIG_FALLOCATE) += fallocate.o
+lib-$(CONFIG_FATATTR) += fatattr.o
+lib-$(CONFIG_FBSET) += fbset.o
+lib-$(CONFIG_FDFORMAT) += fdformat.o
+lib-$(CONFIG_FDISK) += fdisk.o
+lib-$(CONFIG_FINDFS) += findfs.o
+lib-$(CONFIG_FLOCK) += flock.o
+lib-$(CONFIG_FDFLUSH) += freeramdisk.o
+lib-$(CONFIG_FREERAMDISK) += freeramdisk.o
+lib-$(CONFIG_FSCK_MINIX) += fsck_minix.o
+lib-$(CONFIG_FSFREEZE) += fsfreeze.o
+lib-$(CONFIG_FSTRIM) += fstrim.o
+lib-$(CONFIG_GETOPT) += getopt.o
+lib-$(CONFIG_HEXDUMP) += hexdump.o
+lib-$(CONFIG_HD) += hexdump.o
+lib-$(CONFIG_XXD) += hexdump_xxd.o
+lib-$(CONFIG_HWCLOCK) += hwclock.o
+lib-$(CONFIG_IONICE) += ionice.o
+lib-$(CONFIG_IPCRM) += ipcrm.o
+lib-$(CONFIG_IPCS) += ipcs.o
+ifeq ($(CONFIG_FEATURE_LAST_FANCY),y)
+lib-$(CONFIG_FEATURE_LAST_FANCY) += last_fancy.o
+else
+lib-$(CONFIG_LAST) += last.o
+endif
+lib-$(CONFIG_LOSETUP) += losetup.o
+lib-$(CONFIG_LSPCI) += lspci.o
+lib-$(CONFIG_LSUSB) += lsusb.o
+lib-$(CONFIG_MDEV) += mdev.o
+lib-$(CONFIG_MESG) += mesg.o
+lib-$(CONFIG_MKE2FS) += mkfs_ext2.o
+lib-$(CONFIG_MKFS_EXT2) += mkfs_ext2.o
+lib-$(CONFIG_MKFS_MINIX) += mkfs_minix.o
+lib-$(CONFIG_MKFS_REISER) += mkfs_reiser.o
+lib-$(CONFIG_MKDOSFS) += mkfs_vfat.o
+lib-$(CONFIG_MKFS_VFAT) += mkfs_vfat.o
+lib-$(CONFIG_MKSWAP) += mkswap.o
+lib-$(CONFIG_MORE) += more.o
+lib-$(CONFIG_MOUNT) += mount.o
+lib-$(CONFIG_MOUNTPOINT) += mountpoint.o
+lib-$(CONFIG_NSENTER) += nsenter.o
+lib-$(CONFIG_PIVOT_ROOT) += pivot_root.o
+lib-$(CONFIG_RDATE) += rdate.o
+lib-$(CONFIG_RDEV) += rdev.o
+lib-$(CONFIG_READPROFILE) += readprofile.o
+lib-$(CONFIG_RENICE) += renice.o
+lib-$(CONFIG_REV) += rev.o
+lib-$(CONFIG_RTCWAKE) += rtcwake.o
+lib-$(CONFIG_SCRIPT) += script.o
+lib-$(CONFIG_SCRIPTREPLAY) += scriptreplay.o
+lib-$(CONFIG_SETARCH) += setarch.o
+lib-$(CONFIG_LINUX32) += setarch.o
+lib-$(CONFIG_LINUX64) += setarch.o
+lib-$(CONFIG_SETPRIV) += setpriv.o
+lib-$(CONFIG_SETSID) += setsid.o
+lib-$(CONFIG_SWAPON) += swaponoff.o
+lib-$(CONFIG_SWAPOFF) += swaponoff.o
+lib-$(CONFIG_SWITCH_ROOT) += switch_root.o
+lib-$(CONFIG_RUN_INIT)    += switch_root.o
+lib-$(CONFIG_TASKSET) += taskset.o
+lib-$(CONFIG_UEVENT) += uevent.o
+lib-$(CONFIG_UMOUNT) += umount.o
+lib-$(CONFIG_UNSHARE) += unshare.o
+lib-$(CONFIG_WALL) += wall.o

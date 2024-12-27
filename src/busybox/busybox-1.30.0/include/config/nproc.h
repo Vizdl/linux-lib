@@ -1,0 +1,1 @@
+#define CONFIG_NPROC 1

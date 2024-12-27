@@ -1,0 +1,1 @@
+#define CONFIG_RUN_INIT 1

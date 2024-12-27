@@ -1,0 +1,1 @@
+#define CONFIG_FACTOR 1

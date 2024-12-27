@@ -1,0 +1,1 @@
+#undef CONFIG_BASH_IS_ASH

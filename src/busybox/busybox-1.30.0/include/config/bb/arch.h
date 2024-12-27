@@ -1,0 +1,1 @@
+#define CONFIG_BB_ARCH 1

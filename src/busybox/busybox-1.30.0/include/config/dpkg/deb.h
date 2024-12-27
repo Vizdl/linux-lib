@@ -1,0 +1,1 @@
+#define CONFIG_DPKG_DEB 1

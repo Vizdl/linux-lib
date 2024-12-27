@@ -1,5 +1,7 @@
 # 当前目录
 PWD = $(shell pwd)
+BUSYBOX_DIR = src/busybox
+LINUX_DIR= src/linux
 # 主机 arch
 HOST_ARCH = $(shell uname -m)
 # 编译的线程数
@@ -111,7 +113,7 @@ $(info 编译BUSYBOX版本 = ${BUSYBOX});
 .PHONY += gdb-start-in-docker dump-in-docker
 
 defconfig-after-in-docker-x86_64 :
-	cd src/${LINUX_VERSION} && \
+	cd ${LINUX_DIR}/${LINUX_VERSION} && \
 	scripts/config --enable DEBUG_INFO && \
 	scripts/config --disable USB_OHCI_HCD && \
 	scripts/config --disable USB_UHCI_HCD && \
@@ -124,7 +126,7 @@ defconfig-after-in-docker-x86_64 :
 	scripts/config --set-val BLK_DEV_RAM_SIZE 65536
 
 defconfig-after-in-docker-aarch64 :
-	cd src/${LINUX_VERSION} && \
+	cd ${LINUX_DIR}/${LINUX_VERSION} && \
 	scripts/config --set-val DRM y && \
 	scripts/config --set-val VIRTIO y && \
 	scripts/config --set-val DRM_VIRTIO_GPU y && \
@@ -141,29 +143,29 @@ defconfig-after-in-docker-aarch64 :
 	scripts/config --disable ARM64_UAO
 
 fs-defconfig-after-in-docker-x86_64 :
-	cd src/${BUSYBOX}
+	cd ${BUSYBOX_DIR}/${BUSYBOX}
 
 fs-defconfig-after-in-docker-aarch64 :
-	cd src/${BUSYBOX} && \
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && \
 	scripts/config --set-str CROSS_COMPILER_PREFIX "${CROSS_COMPILER_PERFIX}"
 
 # 在镜像环境内的操作
 defconfig-in-docker :
-	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} defconfig && cd - && \
+	cd ${LINUX_DIR}/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} defconfig && cd - && \
 	make defconfig-after-in-docker-${TARGET_ARCH} && \
-	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} localmodconfig && cd - 
+	cd ${LINUX_DIR}/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} localmodconfig && cd - 
 
 menuconfig-in-docker :
-	cd src/${LINUX_VERSION} && make menuconfig
+	cd ${LINUX_DIR}/${LINUX_VERSION} && make menuconfig
 
 distclean-in-docker :
-	cd src/${LINUX_VERSION} && make distclean
+	cd ${LINUX_DIR}/${LINUX_VERSION} && make distclean
 
 clean-in-docker :
-	cd src/${LINUX_VERSION} && make clean
+	cd ${LINUX_DIR}/${LINUX_VERSION} && make clean
 
 image-in-docker :
-	cd src/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} CROSS_COMPILE=${CROSS_COMPILER_PERFIX} ${LINUX_IMAGE} -j$(THREADS)
+	cd ${LINUX_DIR}/${LINUX_VERSION} && make ARCH=${LINUX_ARCH} CROSS_COMPILE=${CROSS_COMPILER_PERFIX} ${LINUX_IMAGE} -j$(THREADS)
 
 gdb-start-in-docker :
 	qemu-system-${TARGET_ARCH}  \
@@ -173,32 +175,32 @@ gdb-start-in-docker :
 		-device ${QEMU_USB_HCI} \
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
-		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
-		-initrd src/${BUSYBOX}/rootfs.img.gz \
+		-kernel ${LINUX_DIR}/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
+		-initrd ${BUSYBOX_DIR}/${BUSYBOX}/rootfs.img.gz \
 		-s -S \
 		-append "root=/dev/ram console=${LINUX_CONSOLE} init=/linuxrc"
 
 fs-defconfig-in-docker :
-	cd src/${BUSYBOX} && make defconfig && \
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && make defconfig && \
 	cd - && make fs-defconfig-after-in-docker-${TARGET_ARCH}
 
 fs-menuconfig-in-docker :
-	cd src/${BUSYBOX} && make menuconfig
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && make menuconfig
 
 fs-clean-in-docker :
-	cd src/${BUSYBOX} && make clean
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && make clean
 
 rootfs-in-docker :
-	cd src/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs-${LINUX_ARCH}.sh ${GCCLIB_PATH}
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs-${LINUX_ARCH}.sh ${GCCLIB_PATH}
 
 fs-distclean-in-docker :
-	cd src/${BUSYBOX} && make distclean \
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && make distclean \
 	&& rm -rf _install/ \
 	&& rm -rf rootfs.ext3 \
 	&& rm -rf rootfs.img.gz
 
 dump-in-docker :
-	objdump -s -d src/${LINUX_VERSION}/vmlinux > dump.s
+	objdump -s -d ${LINUX_DIR}/${LINUX_VERSION}/vmlinux > dump.s
 
 # 串口运行
 run-in-docker :
@@ -209,8 +211,8 @@ run-in-docker :
 		-device ${QEMU_USB_HCI} \
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
-		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
-		-initrd src/${BUSYBOX}/rootfs.img.gz \
+		-kernel ${LINUX_DIR}/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
+		-initrd ${BUSYBOX_DIR}/${BUSYBOX}/rootfs.img.gz \
 		-append "root=/dev/ram console=${LINUX_CONSOLE} init=/linuxrc"
 
 # 图形化运行
@@ -222,8 +224,8 @@ grun-in-docker :
 		-drive file=${PWD}/usbdisk.img,if=none,id=my_usb_disk \
 		-usb -device usb-storage,drive=my_usb_disk \
 		-device usb-kbd \
-		-kernel src/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
-		-initrd src/${BUSYBOX}/rootfs.img.gz \
+		-kernel ${LINUX_DIR}/${LINUX_VERSION}/arch/${LINUX_ARCH}/boot/${LINUX_IMAGE} \
+		-initrd ${BUSYBOX_DIR}/${BUSYBOX}/rootfs.img.gz \
 		-device virtio-gpu -display gtk,gl=on \
 		-append "root=/dev/ram console=tty0 init=/linuxrc"
 
@@ -231,7 +233,7 @@ usbdisk-in-docker:
 	bash scripts/create_usbdisk.sh
 
 gdb-connect-in-docker:
-	gdb-multiarch src/${LINUX_VERSION}/vmlinux -q \
+	gdb-multiarch ${LINUX_DIR}/${LINUX_VERSION}/vmlinux -q \
 	-ex "set architecture ${GDB_ARCH}" \
 	-ex " target remote localhost:1234"
 

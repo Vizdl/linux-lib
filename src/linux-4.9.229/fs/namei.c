@@ -3582,7 +3582,13 @@ struct file *do_filp_open(int dfd, struct filename *pathname,
 	struct nameidata nd;
 	int flags = op->lookup_flags;
 	struct file *filp;
-
+	/**
+	 * 查看 init 进程打开动态库调用栈
+	 */
+	if (!strcmp("/lib/libc.so.6", pathname->name) && current->pid == 1) {
+		printk("dl-debug[%s] : current[%d] open pathname = %s\n", __func__, current->pid ,pathname->name);
+		dump_stack();
+	}
 	set_nameidata(&nd, dfd, pathname);
 	filp = path_openat(&nd, op, flags | LOOKUP_RCU);
 	if (unlikely(filp == ERR_PTR(-ECHILD)))

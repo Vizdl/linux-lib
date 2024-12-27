@@ -146,6 +146,10 @@ static int padzero(unsigned long elf_bss)
 #define ELF_BASE_PLATFORM NULL
 #endif
 
+/**
+ * create_elf_tables 主要负责添加需要的信息到应用程序用户栈中，
+ * 包括 auxiliary vector（辅助向量），argv（命令行参数），environ（环境变量）。
+ */
 static int
 create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 		unsigned long load_addr, unsigned long interp_load_addr)
@@ -348,6 +352,7 @@ static unsigned long elf_map(struct file *filep, unsigned long addr,
 	if (!size)
 		return addr;
 
+	// printk("dl-debug[%s] : file path='%s' mmap to addr[%lx]\n", __func__, filep ? filep->f_path.dentry->d_name.name : "", addr);
 	/*
 	* total_size is the size of the ELF (interpreter) image.
 	* The _first_ mmap needs to know the full size, otherwise
@@ -829,7 +834,6 @@ static int load_elf_binary(struct linux_binprm *bprm)
     /**
 	 * 4. 尝试读取解释器的 program header table
 	 */
-	/* Some simple consistency checks for the interpreter */
 	if (elf_interpreter) {
 		// printk("dl-debug : elf_interpreter = %s\n", elf_interpreter);
 		retval = -ELIBBAD;
@@ -876,8 +880,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	 * 将原来的current->mm 替换成初始化完了的brmp->mm，do_close_on_exec(current->files);关闭原来打开的文件
 	 * 也就是说原来fork的用户空间都会被清除,包括（代码段，数据段，堆，栈）
 	 */
-	/*  Flush all traces of the currently running executable
-        在此清除掉了父进程的所有相关代码 */
+	/* 在此清除掉了父进程的所有相关代码 */
 	retval = flush_old_exec(bprm);
 	if (retval)
 		goto out_free_dentry;
@@ -976,57 +979,30 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		elf_flags = MAP_PRIVATE | MAP_DENYWRITE | MAP_EXECUTABLE;
 
 		vaddr = elf_ppnt->p_vaddr;
-		/*
-		 * If we are loading ET_EXEC or we have already performed
-		 * the ET_DYN load_addr calculations, proceed normally.
-		 * 如果我们正在加载 ET_EXEC 类型的文件，或者已经完成了 ET_DYN 类型的加载地址计算，则正常进行。
+		/**
+		 * 如果我们正在加载 ET_EXEC 类型的文件，
+		 * 或者已经完成了 ET_DYN 类型的加载地址计算，则正常进行。
 		 */
 		if (loc->elf_ex.e_type == ET_EXEC || load_addr_set) {
 			elf_flags |= MAP_FIXED;
 		} else if (loc->elf_ex.e_type == ET_DYN) {
-			/*
-			 * This logic is run once for the first LOAD Program
-			 * Header for ET_DYN binaries to calculate the
-			 * randomization (load_bias) for all the LOAD
-			 * Program Headers, and to calculate the entire
-			 * size of the ELF mapping (total_size). (Note that
-			 * load_addr_set is set to true later once the
-			 * initial mapping is performed.)
-			 *
-			 * There are effectively two types of ET_DYN
-			 * binaries: programs (i.e. PIE: ET_DYN with INTERP)
-			 * and loaders (ET_DYN without INTERP, since they
-			 * _are_ the ELF interpreter). The loaders must
-			 * be loaded away from programs since the program
-			 * may otherwise collide with the loader (especially
-			 * for ET_EXEC which does not have a randomized
-			 * position). For example to handle invocations of
-			 * "./ld.so someprog" to test out a new version of
-			 * the loader, the subsequent program that the
-			 * loader loads must avoid the loader itself, so
-			 * they cannot share the same load range. Sufficient
-			 * room for the brk must be allocated with the
-			 * loader as well, since brk must be available with
-			 * the loader.
-			 *
-			 * Therefore, programs are loaded offset from
-			 * ELF_ET_DYN_BASE and loaders are loaded into the
-			 * independently randomized mmap region (0 load_bias
-			 * without MAP_FIXED).
-			 */
 			/**
-			 * 这个逻辑在处理 ET_DYN 格式二进制文件的第一个 LOAD 程序头时运行，
-			 * 计算所有 LOAD 程序头的随机化值(load_bias)，并计算 ELF 映射的整体大小（total_size）。
+			 * 这个逻辑在处理 ET_DYN 格式二进制文件的第一个 LOAD Segment 时运行，
+			 * 计算所有 LOAD Segment 的随机化值(load_bias)，并计算 ELF 映射的整体大小（total_size）。
 			 * （注意：一旦初始映射完成，load_addr_set 会在稍后被设置为 true。）
 			 *
 			 * 实际上，ET_DYN 二进制文件有两种类型：
 			 * 1. 程序（即 PIE：带有 INTERP 的 ET_DYN）
 			 * 2. 加载器（没有 INTERP 的 ET_DYN，因为它们就是 ELF 解释器）。
 			 * 加载器必须与程序分开加载，因为程序可能会与加载器发生冲突（尤其是对于没有随机化位置的 ET_EXEC）。
-			 * 例如，为了处理 "./ld.so someprog" 这样的命令来测试新版本的加载器，加载器加载的后续程序必须避免与加载器本身冲突，
-			 * 因此它们不能共享相同的加载范围。同时，加载器必须为 brk 分配足够的空间，因为 brk 必须与加载器一起可用。
 			 *
+			 * 例如，为了处理 "./ld-linux-x86-64.so.2 /bin/cp 1.txt  2.txt" 这样的命令来测试新版本的加载器(起到指定 ld.so 的作用)，
+			 * 加载器加载的后续程序(/bin/cp)必须避免与加载器本身冲突，因此它们不能共享相同的加载范围(于是就是不进行固定映射(MAP_FIXED))。
+			 * 同时，加载器必须为 brk 分配足够的空间，因为 brk 必须与加载器一起可用。
 			 * 因此，程序被加载到 ELF_ET_DYN_BASE 偏移的位置，而加载器则被加载到独立随机化的 mmap 区域（0 load_bias 且没有 MAP_FIXED 标志）。
+			 * 
+			 * 如若存在解释器(上述情况1),就从 ELF_ET_DYN_BASE 开始? 并且要判断是否有地址随机化.. 但是是固定映射(MAP_FIXED)
+			 * 如若不存在解释器,说明该二进制本身就是 ld.so, 不进行固定映射(MAP_FIXED),可能是因为防止冲突;
 			 */
 			if (elf_interpreter) {
 				load_bias = ELF_ET_DYN_BASE;
@@ -1068,7 +1044,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		 * 因为mm是刚初始化的，所以会直接加载到load_bias + vaddr。
 		 */
 		/*  5.3  虚拟地址空间与目标映像文件的映射
-         确定了装入地址后，就通过elf_map()建立用户空间虚拟地址空间
+         确定了装入地址后，就通过 elf_map() 建立用户空间虚拟地址空间
          与目标映像文件中某个连续区间之间的映射，
          其返回值就是实际映射的起始地址 */
 		error = elf_map(bprm->file, load_bias + vaddr, elf_ppnt,
@@ -1211,7 +1187,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	if (retval < 0)
 		goto out;
 #endif /* ARCH_HAS_SETUP_ADDITIONAL_PAGES */
-	/* 在内存中生成elf映射表 */
+
 	retval = create_elf_tables(bprm, &loc->elf_ex,
 			  load_addr, interp_load_addr);
 	if (retval < 0)
@@ -1305,6 +1281,7 @@ static int load_elf_library(struct file *file)
 	int retval, error, i, j;
 	struct elfhdr elf_ex;
 
+	printk("dl-debug[%s] : file path='%s'\n", __func__, file ? file->f_path.dentry->d_name.name : "");
 	error = -ENOEXEC;
 	retval = kernel_read(file, 0, (char *)&elf_ex, sizeof(elf_ex));
 	if (retval != sizeof(elf_ex))

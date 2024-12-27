@@ -332,6 +332,14 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
 		if (populate)
 			mm_populate(ret, populate);
 	}
+	/**
+	 * 查看 init 进程映射动态库过程
+	 */
+	if (!strcmp("libc.so.6", file ? file->f_path.dentry->d_name.name : "") && current->pid == 1) {
+		printk("dl-debug[%s] : current[%d] mmap file[%s] pgoff[%lu] to addr[%lx] len[%lu], using flag[%lx] prot[%lx], ret = %lx\n", __func__, 
+			current->pid, file ? file->f_path.dentry->d_name.name : "", pgoff, addr, len , flag, prot, ret);
+		dump_stack();
+	}
 	return ret;
 }
 

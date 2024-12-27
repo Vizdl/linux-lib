@@ -1,7 +1,7 @@
 # 当前目录
 PWD = $(shell pwd)
-BUSYBOX_DIR = src/busybox
-LINUX_DIR= src/linux
+BUSYBOX_DIR = ${PWD}/src/busybox
+LINUX_DIR= ${PWD}/src/linux
 # 主机 arch
 HOST_ARCH = $(shell uname -m)
 # 编译的线程数
@@ -191,7 +191,7 @@ fs-clean-in-docker :
 	cd ${BUSYBOX_DIR}/${BUSYBOX} && make clean
 
 rootfs-in-docker :
-	cd ${BUSYBOX_DIR}/${BUSYBOX} && make -j$(THREADS) && make install && bash rootfs-${LINUX_ARCH}.sh ${GCCLIB_PATH}
+	cd ${BUSYBOX_DIR}/${BUSYBOX} && make -j$(THREADS) && make install && bash ${BUSYBOX_DIR}/scripts/rootfs-${LINUX_ARCH}.sh ${GCCLIB_PATH} ${BUSYBOX}
 
 fs-distclean-in-docker :
 	cd ${BUSYBOX_DIR}/${BUSYBOX} && make distclean \

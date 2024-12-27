@@ -1,7 +1,8 @@
 #!/bin/bash
 LIB_PATH=$1
+BUSYBOX=$2
 
-cd _install
+cd ../${BUSYBOX}/_install
 mkdir etc dev proc sys tmp mnt && mkdir -p etc/init.d/
 mknod dev/console c 5 1 && mknod dev/null c 1 3 && mknod dev/tty1 c 4 1
 touch etc/fstab etc/init.d/rcS etc/inittab && chmod 755 etc -R

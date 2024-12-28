@@ -1,1 +1,0 @@
-#define CONFIG_HUSH_LINENO_VAR 1

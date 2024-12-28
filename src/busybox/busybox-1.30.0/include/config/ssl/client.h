@@ -1,1 +1,0 @@
-#define CONFIG_SSL_CLIENT 1

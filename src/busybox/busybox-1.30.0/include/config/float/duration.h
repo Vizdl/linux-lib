@@ -1,1 +1,0 @@
-#define CONFIG_FLOAT_DURATION 1

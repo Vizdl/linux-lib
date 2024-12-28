@@ -2,7 +2,6 @@ usbdisk.img
 *.o
 *.cmd
 *.a
-*.in
 *.gz
 *.ext3
 *.html

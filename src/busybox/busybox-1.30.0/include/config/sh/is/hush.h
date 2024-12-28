@@ -1,1 +1,0 @@
-#undef CONFIG_SH_IS_HUSH

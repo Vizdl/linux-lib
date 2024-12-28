@@ -1,1 +1,0 @@
-#define CONFIG_FEATURE_UNZIP_CDF 1

@@ -1,1 +1,0 @@
-#undef CONFIG_BASH_IS_HUSH

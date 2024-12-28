@@ -1,1 +1,0 @@
-#define CONFIG_LINUX64 1

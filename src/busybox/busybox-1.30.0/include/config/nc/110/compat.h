@@ -1,1 +1,0 @@
-#define CONFIG_NC_110_COMPAT 1

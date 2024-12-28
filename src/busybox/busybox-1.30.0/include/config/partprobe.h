@@ -1,1 +1,0 @@
-#define CONFIG_PARTPROBE 1

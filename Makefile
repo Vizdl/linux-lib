@@ -147,7 +147,7 @@ fs-defconfig-after-in-docker-x86_64 :
 
 fs-defconfig-after-in-docker-aarch64 :
 	cd ${BUSYBOX_DIR}/${BUSYBOX} && \
-	scripts/config --set-str CROSS_COMPILER_PREFIX "${CROSS_COMPILER_PERFIX}"
+	${BUSYBOX_DIR}/scripts/config --set-str CROSS_COMPILER_PREFIX "${CROSS_COMPILER_PERFIX}"
 
 # 在镜像环境内的操作
 defconfig-in-docker :
